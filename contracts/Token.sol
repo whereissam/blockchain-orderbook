@@ -48,7 +48,10 @@ contract Token{
 
   function _transfer(address _from, address _to, uint256 _value)internal{
      //Require that sender has enough tokens to spend
-      require(balanceOf[msg.sender] >= _value);
+    //  console.log('transfer');
+    //  console.log(balanceOf[msg.sender]);
+    //  console.log(_value);
+    //  console.log(balanceOf[_from] - _value);
       require(_to != address(0));
 
       //Deduct tokens from spender
@@ -70,10 +73,14 @@ contract Token{
   }
 
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool sucesss){
+    // console.log(_from, _to, _value);
+    // console.log(allowance[_from][msg.sender]);
+    // console.log('deduct', allowance[_from][msg.sender] - _value);
     //check approval
     require(_value <= allowance[_from][msg.sender]);
     require(_value <= balanceOf[_from]);
 
+    
     //Reset Allowance
     allowance[_from][msg.sender] = allowance[_from][msg.sender] - _value;
 

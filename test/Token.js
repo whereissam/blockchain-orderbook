@@ -56,6 +56,7 @@ describe("Token", () => {
     describe('Success', () => {
       beforeEach(async () => {//before sending Token, check first
         //Transfer tokens
+        // console.log(deployer, receiver)
         amount = tokens(100)
         transaction = await token.connect(deployer).transfer(receiver.address, amount)
         result = await transaction.wait()
@@ -66,7 +67,7 @@ describe("Token", () => {
         // console.log("deployer balance before transfer", await token.balanceOf(deployer.address))
         // console.log("deployer balance before transfer", await token.balanceOf(receiver.address))
 
-        //Ensure that tokens were transfered(balance change) 
+        //Ensure that tokens were transferred(balance change) 
         expect(await token.balanceOf(deployer.address)).to.equal(tokens(999900))
         expect(await token.balanceOf(receiver.address)).to.equal(amount)
 
@@ -109,13 +110,15 @@ describe("Token", () => {
     let amount, transaction, result
 
     beforeEach(async () => {
+      // console.log(deployer, exchange)
       amount = tokens(100)
       transaction = await token.connect(deployer).approve(exchange.address, amount)
       result = await transaction.wait()
     })
 
     describe('Success', () => {
-      it('allocates an allowance fro delegated token spending', async () => {
+
+      it('allocates an allowance for delegated token spending', async () => {
         expect(await token.allowance(deployer.address, exchange.address)).to.equal(amount)
       })
 
@@ -124,7 +127,7 @@ describe("Token", () => {
         expect(event.event).to.equal('Approval')
 
         const args = event.args
-        console.log(args)
+        // console.log(args)
         expect(args.owner).to.equal(deployer.address)
         expect(args.spender).to.equal(exchange.address)
         expect(args.value).equal(amount)
@@ -142,13 +145,20 @@ describe("Token", () => {
     let amount, transaction, result
 
     beforeEach(async () => {
+      // console.log(exchange.address)
+      // console.log(deployer.address)
       amount = tokens(100)
+      // console.log('amount', amount)
       transaction = await token.connect(deployer).approve(exchange.address, amount)
+      // console.log(transaction)
       result = await transaction.wait()
     })
 
     describe('Success', () => {
       beforeEach(async () => {
+        // console.log(deployer.address)
+        // console.log(receiver.address)
+        // console.log(amount)
         transaction = await token.connect(exchange).transferFrom(deployer.address, receiver.address, amount)
         result = await transaction.wait()
       })
@@ -159,7 +169,7 @@ describe("Token", () => {
       })
 
       it('reset the allowance', async () => {
-        expect(await token.allowance(deployer.address.exchange.address)).to.be.equal(0)
+        expect(await token.allowance(deployer.address, exchange.address)).to.be.equal(0)
       })
 
       it('emits a Transfer event', async () => {
