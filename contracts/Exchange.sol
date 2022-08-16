@@ -149,7 +149,7 @@ contract Exchange{
     //Fee is paid by the user who filled the order(msg.sender)
     //Fee is deducted from _amountGet
     uint256 _feeAmount = (_amountGet * feePercent) / 100;
-    console.log(_feeAmount);
+    // console.log(_feeAmount);
 
     //Execute trade
     //msg.sender is the user who filled the order, while _user is who created the order  
@@ -158,7 +158,7 @@ contract Exchange{
             (_amountGet + _feeAmount);
 
         tokens[_tokenGet][_user] = tokens[_tokenGet][_user] + _amountGet;
-    console.log(tokens[_tokenGet][_user]);
+    // console.log(tokens[_tokenGet][_user]);
 
     //Charge fees
     tokens[_tokenGet][feeAccount] =
