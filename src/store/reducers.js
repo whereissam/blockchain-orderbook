@@ -1,13 +1,5 @@
 export const provider = (state = {}, action) => {
-  console.log(action)
-  // console.log(action.type)
-  console.log(action.connection)
   switch (action.type) {
-    case 'ACCOUNT_LOADED':
-      return {
-        ...state,
-        account: action.account
-      }
     case 'PROVIDER_LOADED':
       return {
         ...state,
@@ -16,32 +8,70 @@ export const provider = (state = {}, action) => {
     case 'NETWORK_LOADED':
       return {
         ...state,
-        connection: action.chainId
+        chainId: action.chainId
       }
-
-
+    case 'ACCOUNT_LOADED':
+      return {
+        ...state,
+        account: action.account
+      }
+    case 'ETHER_BALANCE_LOADED':
+      return {
+        ...state,
+        balance: action.balance
+      }
 
     default:
       return state
   }
 }
 
-
-
-export const tokens = (state = { loaded: false, contract: null }, action) => {
-  console.log(action.type)
+const DEFAULT_TOKENS_STATE = {
+  loaded: false, contracts: [], symbols: []
+}
+export const tokens = (state = DEFAULT_TOKENS_STATE, action) => {
+  // console.log(...state)
+  console.log(state.loaded)
   console.log(action.token)
+  console.log(action.symbol)
+  let token = {
+    ...state,
+    loaded: true,
+    contract: action.token,
+    symbol: action.symbol
+  }
+  console.log(token)
   switch (action.type) {
-    case 'TOKEN_LOADED':
+    case 'TOKEN_1_LOADED':
       return {
         ...state,
         loaded: true,
-        contract: action.token,
-        symbol: action.symbol
+        contracts: [...state.contracts, action.token],
+        symbol: [...state.symbols, action.symbol]
       }
 
+    case 'TOKEN_2_LOADED':
+      return {
+        ...state,
+        loaded: true,
+        contracts: [...state.contracts, action.token],
+        symbol: [...state.symbols, action.symbol]
+      }
     default:
       return state
   }
 }
 
+export const exchange = (state = { loaded: false, contract: {} }, action) => {
+
+  switch (action.type) {
+    case 'EXCHANGE_LOADED':
+      return {
+        ...state,
+        loaded: true,
+        contracts: action.exchange,
+      }
+    default:
+      return state
+  }
+}
