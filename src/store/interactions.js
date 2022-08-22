@@ -5,19 +5,21 @@ import EXCHANGE_ABI from '../abis/Exchange.json'
 export const loadProvider = (dispatch) => {
   const connection = new ethers.providers.Web3Provider(window.ethereum)
   dispatch({ type: 'PROVIDER_LOADED', connection })
-
+  console.log('loadProvider')
   return connection
 }
 
 export const loadNetwork = async (provider, dispatch) => {
   const { chainId } = await provider.getNetwork()
   dispatch({ type: 'NETWORK_LOADED', chainId })
-
+  console.log('loadNetwork')
   return chainId
 }
 
 export const loadAccount = async (provider, dispatch) => {
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+  console.log('loadAccount')
+
   console.log(accounts)
   const account = ethers.utils.getAddress(accounts[0])
   console.log(account)
