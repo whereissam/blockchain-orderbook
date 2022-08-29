@@ -104,7 +104,6 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
         transferInProgress: true
       }
     case 'TRANSFER_SUCCESS':
-      console.log('TRANSFER_SUCCESS')
       return {
         ...state,
         transaction: {
