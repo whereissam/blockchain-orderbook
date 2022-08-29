@@ -7,11 +7,13 @@ import {
   loadNetwork,
   loadAccount,
   loadToken,
-  loadExchange
+  loadExchange,
+  subscribeToEvents
 } from '../store/interactions'
 
 import Navbar from './Navbar'
 import Markets from './Market'
+import Balance from './Balance'
 
 function App () {
   const dispatch = useDispatch()
@@ -41,8 +43,11 @@ function App () {
 
     //Load exchange Contract
     const exchangeConfig = config[chainId].exchange
-    const exchange = await loadExchange(provider, exchangeConfig, dispatch)
-    console.log(exchange.address)
+    const exchange = await loadExchange(provider, exchangeConfig.address, dispatch)
+    // console.log(exchange.address)
+
+    //Listen to events
+    subscribeToEvents(exchange, dispatch)
   }
 
   useEffect(() => {
@@ -59,7 +64,7 @@ function App () {
 
           <Markets />
 
-          {/* Balance */}
+          <Balance />
 
           {/* Order */}
 

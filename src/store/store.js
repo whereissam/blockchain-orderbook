@@ -6,14 +6,14 @@ import { configureStore } from '@reduxjs/toolkit'
 /* Import Reducers */
 import { provider, tokens, exchange } from './reducers'
 
-console.log(tokens)
+// console.log(tokens)
 
 const reducer = combineReducers({
   provider,
   tokens,
   exchange
 })
-console.log(reducer)
+// console.log(reducer)
 
 const initialState = {}
 

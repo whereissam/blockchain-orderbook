@@ -22,8 +22,8 @@ const Navbar = () => {
     })
   }
 
-  console.log(config[chainId])
-  console.log(config[chainId] ? `${config[chainId].explorerURL}/address/${account}` : `#`)
+  // console.log(config[chainId])
+  // console.log(config[chainId] ? `${config[chainId].explorerURL}/address/${account}` : `#`)
 
   return (
     <div className='exchange__header grid'>
