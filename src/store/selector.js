@@ -1,12 +1,16 @@
 import { createSelector } from "reselect"
 import { get, groupBy, reject } from 'lodash'
-import { ethers } from 'ethers'
 import moment from "moment"
+import { ethers } from 'ethers'
+
+const GREEN = '#25CE8F'
+const RED = '#F45353'
 
 const tokens = state => get(state, 'tokens.contracts')
 const allOrders = state => get(state, 'exchange.allOrders.data', [])
 const cancelledOrders = state => get(state, 'exchange.cancelledOrders.data', [])
-const filledOrders = state => get(state, 'exchange.cancelledOrders.data', [])
+const filledOrders = state => get(state, 'exchange.filledOrders.data', [])
+
 
 const openOrders = state => {
   const all = allOrders(state)
@@ -22,9 +26,6 @@ const openOrders = state => {
   return openOrders
 }
 
-const GREEN = '#35CE8F'
-const RED = '#F45353'
-
 const decorateOrder = (order, tokens) => {
   let token0Amount, token1Amount
 
@@ -33,8 +34,8 @@ const decorateOrder = (order, tokens) => {
     token0Amount = order.amountGive //The amount of SSS we are giving
     token1Amount = order.amountGet //The amount of mETH we want
   } else {
-    token0Amount = order.amountGive //The amount of SSS we want
-    token1Amount = order.amountGet //The amount of mETH we are giving
+    token0Amount = order.amountGet //The amount of SSS we want
+    token1Amount = order.amountGive //The amount of mETH we are giving
   }
 
   //Calculate token price to 5 decimal places
@@ -44,7 +45,7 @@ const decorateOrder = (order, tokens) => {
 
   return ({
     ...order,
-    token0Amount: ethers.utils.formatUnits(token1Amount, "ether"),
+    token0Amount: ethers.utils.formatUnits(token0Amount, "ether"),
     token1Amount: ethers.utils.formatUnits(token1Amount, 'ether'),
     tokenPrice,
     formattedTimestamp: moment.unix(order.timestamp).format('h:mm:ssa d MMM D')
