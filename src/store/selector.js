@@ -11,15 +11,17 @@ const allOrders = state => get(state, 'exchange.allOrders.data', [])
 const cancelledOrders = state => get(state, 'exchange.cancelledOrders.data', [])
 const filledOrders = state => get(state, 'exchange.filledOrders.data', [])
 
-
 const openOrders = state => {
   const all = allOrders(state)
   const filled = filledOrders(state)
   const cancelled = cancelledOrders(state)
+  console.log(filled, cancelled)
 
   const openOrders = reject(all, (order) => {
     const orderFilled = filled.some((o) => o.id.toString() === order.id.toString())
+    // console.log(orderFilled)
     const orderCancelled = cancelled.some((o) => o.id.toString() === order.id.toString())
+    // console.log(orderCancelled)
     return (orderFilled || orderCancelled)
   })
 
@@ -86,7 +88,7 @@ export const orderBookSelector = createSelector(openOrders, tokens, (orders, tok
     sellOrders: sellOrders.sort((a, b) => b.tokenPrice - a.tokenPrice)
   }
 
-  console.log(orders)
+  // console.log(orders)
   return orders
 })
 
@@ -100,8 +102,8 @@ const decorateOrderBookOrders = (orders, tokens) => {
   )
 }
 
-
 const decorateOrderBookOrder = (order, tokens) => {
+
   const orderType = order.tokenGive === tokens[1].address ? 'buy' : 'sell'
 
   return ({

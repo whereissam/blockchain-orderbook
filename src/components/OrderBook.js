@@ -9,7 +9,7 @@ import { orderBookSelector } from '../store/selector'
 const OrderBook = () => {
   const symbols = useSelector(state => state.tokens.symbols)
   const orderBook = useSelector(orderBookSelector)
-  console.log(orderBook)
+  // console.log(orderBook)
 
   return (
     <div className="component exchange__orderbook">
@@ -35,9 +35,9 @@ const OrderBook = () => {
               {orderBook && orderBook.sellOrders.map((order, index) => {
                 return (
                   <tr key={index}>
-                    <td>{order.token0Amount}</td>
+                    <td>{((order.token0Amount) * 1).toFixed(1)}</td>
                     <td style={{ color: `${order.orderTypeClass}` }}>{order.tokenPrice}</td>
-                    <td>{order.token1Amount}</td>
+                    <td>{((order.token1Amount) * 1).toFixed(1)}</td>
                   </tr>
                 )
               })}
@@ -64,9 +64,9 @@ const OrderBook = () => {
               {orderBook && orderBook.buyOrders.map((order, index) => {
                 return (
                   <tr key={index}>
-                    <td>{order.token1Amount}</td>
+                    <td>{((order.token1Amount) * 1).toFixed(1)}</td>
                     <td style={{ color: `${order.orderTypeClass}` }}>{order.tokenPrice}</td>
-                    <td>{order.token0Amount}</td>
+                    <td>{((order.token0Amount) * 1).toFixed(1)}</td>
                   </tr>
                 )
               })}
