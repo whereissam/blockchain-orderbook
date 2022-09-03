@@ -98,7 +98,7 @@ export const loadAllOrders = async (provider, exchange, dispatch) => {
   const block = await provider.getBlockNumber()
 
   //Fetch cancel orders
-  const cancelStream = await exchange.queryFilter('Cancel', 0, block)
+  const cancelStream = await exchange.queryFilter('Cancel', 0, block) //From block 0 to block tail
   const cancelledOrders = cancelStream.map(event => event.args)
   dispatch({ type: 'CANCELLED_ORDERS_LOADED', cancelledOrders })
 
