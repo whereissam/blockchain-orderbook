@@ -96,6 +96,7 @@ export const loadBalances = async (exchange, tokens, account, dispatch) => {
 //Load all orders
 export const loadAllOrders = async (provider, exchange, dispatch) => {
   const block = await provider.getBlockNumber()
+  // console.log(block)
 
   //Fetch cancel orders
   const cancelStream = await exchange.queryFilter('Cancel', 0, block) //From block 0 to block tail

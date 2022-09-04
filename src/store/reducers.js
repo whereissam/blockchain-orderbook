@@ -107,6 +107,7 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
       }
 
     case 'ALL_ORDERS_LOADED':
+      // console.log(action.allOrders)
       return {
         ...state,
         allOrders: {
