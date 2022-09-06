@@ -5,11 +5,11 @@ import Banner from "./Banner"
 
 const Trades = () => {
   const symbols = useSelector(state => state.tokens.symbols)
-  console.log(symbols)
+  // console.log(symbols)
   const filledOrders = useSelector(filledOrdersSelector)
 
 
-  console.log(filledOrders)
+  // console.log(filledOrders)
 
   return (
     <div className="component exchange__trades">
@@ -31,7 +31,6 @@ const Trades = () => {
           <tbody>
 
             {filledOrders && filledOrders.map((order, index) => {
-              console.log(order.tokenPriceClass)
               return (
                 <tr key={index}>
                   <td>{order.formattedTimestamp}</td>
