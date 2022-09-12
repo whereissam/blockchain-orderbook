@@ -1,4 +1,4 @@
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 
 // Import Assets
 import sort from '../assets/sort.svg'
@@ -6,10 +6,20 @@ import sort from '../assets/sort.svg'
 // Import Selectors
 import { orderBookSelector } from '../store/selector'
 
+// Import Interactions
+import { fillOrder } from '../store/interactions'
+import { exchange, provider } from '../store/reducers'
+
 const OrderBook = () => {
+  const provider = useSelector(state => state.provider.connection)
+  const exchange = useSelector(state => state.exchange.contract)
   const symbols = useSelector(state => state.tokens.symbols)
   const orderBook = useSelector(orderBookSelector)
-  // console.log(orderBook)
+  const dispatch = useDispatch()
+
+  const fillOrderedHandler = (order) => {
+    fillOrder(provider, exchange, order, dispatch)
+  }
 
   return (
     <div className="component exchange__orderbook">
@@ -34,7 +44,7 @@ const OrderBook = () => {
             <tbody>
               {orderBook && orderBook.sellOrders.map((order, index) => {
                 return (
-                  <tr key={index}>
+                  <tr key={index} onClick={() => fillOrderedHandler(order)}>
                     <td>{((order.token0Amount) * 1).toFixed(1)}</td>
                     <td style={{ color: `${order.orderTypeClass}` }}>{order.tokenPrice}</td>
                     <td>{((order.token1Amount) * 1).toFixed(1)}</td>
@@ -63,7 +73,7 @@ const OrderBook = () => {
             <tbody>
               {orderBook && orderBook.buyOrders.map((order, index) => {
                 return (
-                  <tr key={index}>
+                  <tr key={index} onClick={() => fillOrderedHandler(order)}>
                     <td>{((order.token1Amount) * 1).toFixed(1)}</td>
                     <td style={{ color: `${order.orderTypeClass}` }}>{order.tokenPrice}</td>
                     <td>{((order.token0Amount) * 1).toFixed(1)}</td>
