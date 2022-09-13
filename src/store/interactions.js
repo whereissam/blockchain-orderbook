@@ -69,14 +69,17 @@ export const subscribeToEvents = (exchange, dispatch) => {
 
   exchange.on('Trade', (id, user, tokenGet, amountGet, tokenGive, amountGive, creator, timestamp, event) => {
     const order = event.args
+    console.log('trade', order)
     dispatch({ type: 'ORDER_FILL_SUCCESS', order, event })
   })
 
   exchange.on('Deposit', (token, user, amount, balance, event) => {
+    console.log('Deposit')
     dispatch({ type: 'TRANSFER_SUCCESS', event })
   })
 
   exchange.on('Withdraw', (token, user, amount, balance, event) => {
+    console.log('Withdraw')
     dispatch({ type: 'TRANSFER_SUCCESS', event })
   })
 
@@ -142,10 +145,7 @@ export const transferTokens = async (provider, exchange, transferType, token, am
       transaction = await exchange.connect(signer).depositToken(token.address, amountToTransfer)
     } else {
       transaction = await exchange.connect(signer).withdrawToken(token.address, amountToTransfer)
-
     }
-
-
     await transaction.wait()
   } catch (error) {
     console.error(error)
