@@ -13,18 +13,19 @@ const Alert = () => {
   const isPending = useSelector(state => state.exchange.transaction.isPending)
   const isError = useSelector(state => state.exchange.transaction.isError)
   const events = useSelector(myEventsSelector)
-  console.log(network, account, isPending, isError, events)
-  console.log(config, config[network], network)
+  // console.log(network, account, isPending, isError, events)
   const removeHandler = async (e) => {
     alertRef.current.className = 'alert--remove'
   }
 
   useEffect(() => {
-    console.log(isPending)
+    // console.log(isPending)
+    // console.log(events[0], isPending, isError, account)
     if ((events[0] || isPending || isError) && account) {
+      console.log('alerts')
       alertRef.current.className = 'alert'
     }
-  }, [events, isPending, isError, account])
+  }, [isPending, isError])
 
   return (
     <div>

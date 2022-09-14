@@ -1,6 +1,6 @@
-require("@nomicfoundation/hardhat-toolbox")
+// require("@nomicfoundation/hardhat-toolbox")
+require("nomicfoundation/hardhat-waffle")
 require('dotenv').config()
-
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {

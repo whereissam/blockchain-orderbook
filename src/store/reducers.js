@@ -224,7 +224,7 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
 
     //Transfer cases ( deposit & withdraws )
     case 'TRANSFER_REQUEST':
-      console.log('TRANSFER_REQUEST')
+      // console.log('TRANSFER_REQUEST')
       return {
         ...state,
         transaction: {
@@ -235,7 +235,7 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
         transferInProgress: true
       }
     case 'TRANSFER_SUCCESS':
-      console.log('TRANSFER_SUCCESS')
+      // console.log('TRANSFER_SUCCESS')
       return {
         ...state,
         transaction: {
@@ -247,7 +247,7 @@ export const exchange = (state = DEFAULT_EXCHANGE_STATE, action) => {
         events: [action.event, ...state.events]
       }
     case 'TRANSFER_FAIL':
-      console.log('TRANSFER_FAIL')
+      // console.log('TRANSFER_FAIL')
       return {
         ...state,
         transaction: {
