@@ -7,7 +7,8 @@ import { loadToken } from '../store/interactions'
 const Market = () => {
   const provider = useSelector(state => state.provider.connection)
   const chainId = useSelector(state => state.provider.chainId)
-
+  console.log(chainId)
+  console.log(config[chainId])
   const dispatch = useDispatch()
 
   const marketHandler = async (e) => {

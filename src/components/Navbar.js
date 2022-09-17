@@ -15,15 +15,13 @@ const Navbar = () => {
     await loadAccount(provider, dispatch)
   }
 
+
   const networkHandler = async (e) => {
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: e.target.value }],
     })
   }
-
-  // console.log(config[chainId])
-  // console.log(config[chainId] ? `${config[chainId].explorerURL}/address/${account}` : `#`)
 
   return (
     <div className='exchange__header grid'>
@@ -38,7 +36,7 @@ const Navbar = () => {
           <select name="networks" id="networks" value={config[chainId] ? `0x${chainId.toString(16)}` : `0`} onChange={networkHandler}>
             <option value="0" disabled>Select Network</option>
             <option value="0x7A69">Localhost</option>
-            <option value="0x2a">Kovan</option>
+            <option value="0x5">Goerli</option>
           </select>
         )}
 

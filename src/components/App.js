@@ -29,6 +29,7 @@ function App () {
 
     // Connect Ethers to blockchain
     const provider = loadProvider(dispatch)
+    console.log(provider)
 
     //Fetch current network's chainId
     const chainId = await loadNetwork(provider, dispatch)
@@ -44,6 +45,7 @@ function App () {
     })
 
     // Token Smart Contract
+    console.log(config)
     const SSS = config[chainId].SSS
     const mETH = config[chainId].mETH
     await loadToken(provider, [SSS.address, mETH.address], dispatch)

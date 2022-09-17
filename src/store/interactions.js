@@ -14,6 +14,7 @@ export const loadProvider = (dispatch) => {
 //2. Load provider network(Login wallet) - get the network info
 export const loadNetwork = async (provider, dispatch) => {
   const { chainId } = await provider.getNetwork()
+  console.log(chainId)
   dispatch({ type: 'NETWORK_LOADED', chainId })
   // console.log('loadNetwork')
   return chainId
