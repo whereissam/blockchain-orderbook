@@ -22,11 +22,11 @@
     "hardhat:compile": "hardhat compile",
     "hardhat:test": "hardhat test",
     "hardhat:node": "hardhat node",
-    "deploy:local": "hardhat run scripts/deploy.js --network localhost",
-    "deploy:goerli": "hardhat run scripts/deploy.js --network goerli",
-    "deploy:mainnet": "hardhat run scripts/deploy.js --network mainnet",
-    "seed:local": "hardhat run scripts/seed-exchange.js --network localhost",
-    "seed:goerli": "hardhat run scripts/seed-exchange.js --network goerli",
+    "deploy:local": "hardhat run scripts/deploy.cjs --network localhost",
+    "deploy:goerli": "hardhat run scripts/deploy.cjs --network goerli",
+    "deploy:mainnet": "hardhat run scripts/deploy.cjs --network mainnet",
+    "seed:local": "hardhat run scripts/seed-exchange.cjs --network localhost",
+    "seed:goerli": "hardhat run scripts/seed-exchange.cjs --network goerli",
     "verify:goerli": "hardhat verify --network goerli",
     "verify:mainnet": "hardhat verify --network mainnet"
   },
@@ -99,10 +99,13 @@
     "@typechain/hardhat": "^9.1.0",
     "@typechain/ethers-v6": "^0.5.1",
     "typechain": "^8.3.2",
-    "chai": "^5.2.0",
+    "chai": "^4.4.1",
     "dotenv": "^17.0.1",
     "cross-env": "^7.0.3",
     "concurrently": "^9.0.1"
+  },
+  "overrides": {
+    "chai": "^4.4.1"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [

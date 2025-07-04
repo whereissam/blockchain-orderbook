@@ -1,7 +1,7 @@
 const config = require('../src/config.json')
 
 const tokens = (n) => {
-  return ethers.utils.parseUnits(n.toString(), 'ether')
+  return ethers.parseUnits(n.toString(), 'ether')
 }
 
 const wait = (seconds) => {

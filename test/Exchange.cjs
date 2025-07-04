@@ -3,7 +3,7 @@ const { ethers } = require('hardhat')
 // const { result } = require('lodash')
 
 const tokens = (n) => {
-  return ethers.utils.parseUnits(n.toString(), 'ether')
+  return ethers.parseUnits(n.toString(), 'ether')
 }
 
 describe("Exchange", () => {
