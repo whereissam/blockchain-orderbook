@@ -127,6 +127,7 @@ small {
   height: 10vh;
 
   position: relative;
+  z-index: 10000;
 }
 
 .exchange__header small {
@@ -354,6 +355,9 @@ small {
 
   grid-column-start: 1;
   grid-column-end: 13;
+  
+  min-height: 400px;
+  height: auto;
 }
 
 .exchange__orderbook--sell tbody tr:hover,
@@ -638,6 +642,15 @@ table td {
 /* ------------------------------------------------------ */
 /* Media Queries */
 
+/* Mobile specific styles */
+@media screen and (max-width: 575px) {
+  .exchange__orderbook {
+    min-height: 350px;
+    height: 50vh;
+    max-height: 600px;
+  }
+}
+
 @media screen and (min-width: 576px) {
   .exchange__markets,
   .exchange__transfers,
@@ -648,6 +661,10 @@ table td {
 
   .exchange__header--brand h1 {
     display: contents;
+  }
+  
+  .exchange__orderbook {
+    min-height: 400px;
   }
 }
 
@@ -799,4 +816,202 @@ table td {
     grid-column-start: 4;
     grid-column-end: 5;
   }
+}
+
+/* Wallet Dropdown Styles */
+.wallet-dropdown {
+  position: relative;
+}
+
+.wallet-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.wallet-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.wallet-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--clr-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10001;
+}
+
+.wallet-menu button,
+.wallet-menu a {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  color: var(--clr-white);
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+  text-align: left;
+}
+
+.wallet-menu button:hover,
+.wallet-menu a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.wallet-menu .disconnect {
+  color: var(--clr-red);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+}
+
+.identicon {
+  border-radius: 50%;
+}
+
+/* Toast Notification Styles */
+.toast {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  min-width: 300px;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease-in-out;
+  font-size: 0.875rem;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast--hidden {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.toast--success {
+  background-color: rgba(37, 206, 143, 0.1);
+  border-color: var(--clr-green);
+  color: var(--clr-green);
+}
+
+.toast--error {
+  background-color: rgba(244, 83, 83, 0.1);
+  border-color: var(--clr-red);
+  color: var(--clr-red);
+}
+
+.toast--info {
+  background-color: rgba(33, 135, 208, 0.1);
+  border-color: var(--clr-blue);
+  color: var(--clr-blue);
+}
+
+.toast__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toast__close {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: inherit;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.8;
+  transition: all 0.2s;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.toast__close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+/* Network Dropdown Styles */
+.network-dropdown {
+  position: relative;
+}
+
+.network-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+  background: var(--clr-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--clr-white);
+  font-weight: 700;
+}
+
+.network-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.network-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--clr-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10001;
+}
+
+.network-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  color: var(--clr-white);
+  cursor: pointer;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  transition: background-color 0.2s;
+  text-align: left;
+  font-weight: 700;
+}
+
+.network-menu button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.network-menu button:disabled {
+  color: var(--clr-neutral);
+  cursor: not-allowed;
 }

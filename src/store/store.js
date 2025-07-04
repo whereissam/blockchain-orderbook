@@ -1,23 +1,21 @@
-import { createStore, combineReducers, applyMiddleware } from 'redux'
-import thunk from 'redux-thunk'
-import { composeWithDevTools } from 'redux-devtools-extension'
 import { configureStore } from '@reduxjs/toolkit'
 
 /* Import Reducers */
 import { provider, tokens, exchange } from './reducers'
 
-// console.log(tokens)
-
-const reducer = combineReducers({
-  provider,
-  tokens,
-  exchange
+const store = configureStore({
+  reducer: {
+    provider,
+    tokens,
+    exchange
+  },
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware({
+    serializableCheck: {
+      ignoredActions: ['PROVIDER_LOADED'],
+      ignoredPaths: ['provider.connection']
+    }
+  }),
+  devTools: process.env.NODE_ENV !== 'production'
 })
-// console.log(reducer)
 
-const initialState = {}
-
-const middleware = [thunk]
-
-const store = createStore(reducer, initialState, composeWithDevTools(applyMiddleware(...middleware)))
 export default store

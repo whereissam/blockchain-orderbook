@@ -20,6 +20,18 @@ export const provider = (state = {}, action) => {
         ...state,
         balance: action.balance
       }
+    case 'ACCOUNT_DISCONNECTED':
+      return {
+        ...state,
+        account: null,
+        balance: null
+      }
+    case 'PROVIDER_DISCONNECTED':
+      return {
+        ...state,
+        connection: null,
+        chainId: null
+      }
 
     default:
       return state

@@ -5,7 +5,7 @@ import EXCHANGE_ABI from '../abis/Exchange.json'
 
 //1. Load provider(Login wallet) - get the connection info
 export const loadProvider = (dispatch) => {
-  const connection = new ethers.providers.Web3Provider(window.ethereum)
+  const connection = new ethers.BrowserProvider(window.ethereum)
   dispatch({ type: 'PROVIDER_LOADED', connection })
   // console.log('loadProvider')
   return connection
@@ -15,20 +15,22 @@ export const loadProvider = (dispatch) => {
 export const loadNetwork = async (provider, dispatch) => {
   const { chainId } = await provider.getNetwork()
   console.log(chainId)
-  dispatch({ type: 'NETWORK_LOADED', chainId })
+  // Convert BigInt to number for Redux serialization
+  const chainIdNumber = Number(chainId)
+  dispatch({ type: 'NETWORK_LOADED', chainId: chainIdNumber })
   // console.log('loadNetwork')
-  return chainId
+  return chainIdNumber
 }
 
 //3. Load provider account(Login wallet) - get the account info & balance
 export const loadAccount = async (provider, dispatch) => {
   const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
 
-  const account = ethers.utils.getAddress(accounts[0])
+  const account = ethers.getAddress(accounts[0])
   dispatch({ type: 'ACCOUNT_LOADED', account })
 
   let balance = await provider.getBalance(account)
-  balance = ethers.utils.formatEther(balance)
+  balance = ethers.formatEther(balance)
 
   dispatch({ type: 'ETHER_BALANCE_LOADED', balance })
 
@@ -138,7 +140,7 @@ export const transferTokens = async (provider, exchange, transferType, token, am
 
   try {
     const signer = await provider.getSigner()
-    const amountToTransfer = ethers.utils.parseUnits(amount.toString(), 18)
+    const amountToTransfer = ethers.parseUnits(amount.toString(), 18)
 
     if (transferType === 'Deposit') {
       transaction = await token.connect(signer).approve(exchange.address, amountToTransfer)
@@ -148,6 +150,9 @@ export const transferTokens = async (provider, exchange, transferType, token, am
       transaction = await exchange.connect(signer).withdrawToken(token.address, amountToTransfer)
     }
     await transaction.wait()
+    
+    // Dispatch success action when transfer completes
+    dispatch({ type: 'TRANSFER_SUCCESS' })
   } catch (error) {
     console.error(error)
     dispatch({ type: 'TRANSFER_FAIL' })
@@ -163,9 +168,9 @@ export const makeBuyOrder = async (provider, exchange, tokens, order, dispatch) 
   // address _tokenGive,
   // uint256 _amountGive (orderAmount * orderPrice)
   const tokenGet = tokens[0].address
-  const amountGet = ethers.utils.parseUnits(order.amount, 18)
+  const amountGet = ethers.parseUnits(order.amount, 18)
   const tokenGive = tokens[1].address
-  const amountGive = ethers.utils.parseUnits((order.amount * order.price).toString(), 18)
+  const amountGive = ethers.parseUnits((order.amount * order.price).toString(), 18)
 
   dispatch({ type: 'NEW_ORDER_REQUEST' })
 
@@ -185,9 +190,9 @@ export const makeSellOrder = async (provider, exchange, tokens, order, dispatch)
   // address _tokenGive,
   // uint256 _amountGive (orderAmount * orderPrice)
   const tokenGet = tokens[1].address
-  const amountGet = ethers.utils.parseUnits((order.amount * order.price).toString(), 18)
+  const amountGet = ethers.parseUnits((order.amount * order.price).toString(), 18)
   const tokenGive = tokens[0].address
-  const amountGive = ethers.utils.parseUnits(order.amount, 18)
+  const amountGive = ethers.parseUnits(order.amount, 18)
 
   dispatch({ type: 'NEW_ORDER_REQUEST' })
 

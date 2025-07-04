@@ -114,8 +114,10 @@ const Balance = () => {
             value={token1TransferAmount === 0 ? '' : token1TransferAmount}
             onChange={(e) => amountHandler(e, tokens[0])} />
 
-          <button className='button' type='submit'>
-            {isDeposit ? (
+          <button className='button' type='submit' disabled={transferInProgress}>
+            {transferInProgress ? (
+              <span>Processing...</span>
+            ) : isDeposit ? (
               <span>Deposit</span>
             ) : (
               <span>Withdraw</span>
@@ -145,8 +147,10 @@ const Balance = () => {
             value={token2TransferAmount === 0 ? '' : token2TransferAmount}
           />
 
-          <button className='button' type='submit'>
-            {isDeposit ? (
+          <button className='button' type='submit' disabled={transferInProgress}>
+            {transferInProgress ? (
+              <span>Processing...</span>
+            ) : isDeposit ? (
               <span>Deposit</span>
             ) : (
               <span>Withdraw</span>

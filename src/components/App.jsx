@@ -21,9 +21,15 @@ import PriceChart from './PriceChart'
 import Trades from './Trade'
 import Transactions from './Transaction'
 import Alert from './Alert'
+import Toast from './Toast'
+import { useToast } from '../hooks/useToast'
 
 function App () {
   const dispatch = useDispatch()
+  const { toasts, showToast, removeToast } = useToast()
+
+  // Make toast available globally
+  window.showToast = showToast
 
   const loadBlockchainData = async () => {
 
@@ -46,12 +52,33 @@ function App () {
 
     // Token Smart Contract
     console.log(config)
+    
+    // Check if config exists for current chain
+    if (!config[chainId]) {
+      console.error(`No configuration found for chain ID: ${chainId}`)
+      if (window.showToast) {
+        window.showToast(`Unsupported network. Please switch to a supported network.`, 'error', 5000)
+      }
+      return
+    }
+    
     const SSS = config[chainId].SSS
     const mETH = config[chainId].mETH
+    
+    if (!SSS || !mETH) {
+      console.error('Token configuration missing')
+      return
+    }
+    
     await loadToken(provider, [SSS.address, mETH.address], dispatch)
 
     //Load exchange Contract
     const exchangeConfig = config[chainId].exchange
+    if (!exchangeConfig) {
+      console.error('Exchange configuration missing')
+      return
+    }
+    
     const exchange = await loadExchange(provider, exchangeConfig.address, dispatch)
     // console.log(exchange.address)
 
@@ -95,6 +122,17 @@ function App () {
       </main>
 
       <Alert />
+
+      {/* Toast Notifications */}
+      {toasts.map(toast => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
 
     </div>
   )
