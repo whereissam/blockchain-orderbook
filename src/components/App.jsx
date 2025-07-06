@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
 import config from '../config.json'
 
 import {
@@ -25,7 +24,6 @@ import Toast from './Toast'
 import { useToast } from '../hooks/useToast'
 
 function App () {
-  const dispatch = useDispatch()
   const { toasts, showToast, removeToast } = useToast()
 
   // Make toast available globally
@@ -34,11 +32,19 @@ function App () {
   const loadBlockchainData = async () => {
 
     // Connect Ethers to blockchain
-    const provider = loadProvider(dispatch)
+    const provider = loadProvider()
     console.log(provider)
 
+    if (!provider) {
+      console.log('No provider available - MetaMask not detected or not connected')
+      return
+    }
+
     //Fetch current network's chainId
-    const chainId = await loadNetwork(provider, dispatch)
+    const chainId = await loadNetwork(provider)
+
+    // Load account on initial page load
+    await loadAccount(provider)
 
     //Reload page when network changes
     window.ethereum.on('chainChanged', () => {
@@ -47,7 +53,7 @@ function App () {
 
     //Fetch current account & balance from Metamask
     window.ethereum.on('accountsChanged', async () => {
-      await loadAccount(provider, dispatch)
+      await loadAccount(provider)
     })
 
     // Token Smart Contract
@@ -70,7 +76,7 @@ function App () {
       return
     }
     
-    await loadToken(provider, [SSS.address, mETH.address], dispatch)
+    await loadToken(provider, [SSS.address, mETH.address])
 
     //Load exchange Contract
     const exchangeConfig = config[chainId].exchange
@@ -79,14 +85,14 @@ function App () {
       return
     }
     
-    const exchange = await loadExchange(provider, exchangeConfig.address, dispatch)
+    const exchange = await loadExchange(provider, exchangeConfig.address)
     // console.log(exchange.address)
 
     //Fetch all orders: open, filled, cancelled
-    loadAllOrders(provider, exchange, dispatch)
+    loadAllOrders(provider, exchange)
 
     //Listen to events
-    subscribeToEvents(exchange, dispatch)
+    subscribeToEvents(exchange)
   }
 
   useEffect(() => {

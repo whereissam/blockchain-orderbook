@@ -1,18 +1,19 @@
 import { useRef, useEffect } from 'react'
-import { useSelector } from 'react-redux'
+import useProviderStore from '../store/providerStore'
+import useExchangeStore from '../store/exchangeStore'
 
-import { myEventsSelector } from '../store/selector'
+import { useMyEventsSelector } from '../store/zustandSelectors'
 
 import config from '../config.json'
 
 const Alert = () => {
   const alertRef = useRef(null)
 
-  const network = useSelector(state => state.provider.chainId)
-  const account = useSelector(state => state.provider.account)
-  const isPending = useSelector(state => state.exchange.transaction.isPending)
-  const isError = useSelector(state => state.exchange.transaction.isError)
-  const events = useSelector(myEventsSelector)
+  const network = useProviderStore(state => state.chainId)
+  const account = useProviderStore(state => state.account)
+  const isPending = useExchangeStore(state => state.transaction.isPending)
+  const isError = useExchangeStore(state => state.transaction.isError)
+  const events = useMyEventsSelector()
   // console.log(network, account, isPending, isError, events)
   const removeHandler = async (e) => {
     alertRef.current.className = 'alert--remove'

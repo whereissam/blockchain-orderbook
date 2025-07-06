@@ -90,10 +90,30 @@ npm run dev
 bun run dev
 ```
 
-5. **Open in browser**
+5. **Set up blockchain environment** (Required for full functionality)
+```bash
+# Start local Hardhat blockchain (Terminal 1)
+npm run hardhat:node
+
+# Deploy smart contracts (Terminal 2)
+npm run deploy:local
+
+# Seed exchange with test data (Terminal 2)
+npm run seed:local
+
+# Start React app (Terminal 3)
+npm run dev
 ```
-http://localhost:3501
+
+6. **Open in browser**
 ```
+http://localhost:3502
+```
+
+7. **Configure MetaMask**
+- Add network: `http://localhost:8545`
+- Chain ID: `31337`
+- Import Hardhat test account (see console output from step 5)
 
 ## 🏗️ Architecture
 
@@ -114,10 +134,11 @@ blockchain-orderbook/
 │   ├── hooks/             # Custom React hooks
 │   │   ├── useWeb3.js     # Web3 integration
 │   │   └── useMediaQuery.js # Responsive utilities
-│   ├── store/             # State management
-│   │   ├── useTokensStore.js    # Token state (Zustand)
-│   │   ├── useProviderStore.js  # Web3 provider state
-│   │   ├── useExchangeStore.js  # Exchange state
+│   ├── store/             # State management (Zustand)
+│   │   ├── providerStore.js     # Web3 provider state
+│   │   ├── tokensStore.js       # Token contracts & balances
+│   │   ├── exchangeStore.js     # Exchange orders & transactions
+│   │   ├── zustandSelectors.js  # Custom reactive hooks
 │   │   └── interactions.js      # Blockchain interactions
 │   ├── styles/            # Global styles
 │   │   └── index.css      # Tailwind + design system
@@ -141,8 +162,8 @@ blockchain-orderbook/
 - **React Router 7.6.3** - Declarative routing
 
 #### State Management
-- **Zustand** - Lightweight state management
-- **Redux Toolkit** - Complex state logic (legacy migration)
+- **Zustand 5.0.1** - Modern, lightweight state management (Migrated from Redux)
+- **Custom Hooks** - Reactive selectors for optimal performance
 
 #### Web3 Integration
 - **Wagmi 2.12.17** - React hooks for Ethereum
@@ -158,6 +179,250 @@ blockchain-orderbook/
 - **TypeScript 5.6.3** - Type safety (partial migration)
 - **Vitest 3.2.4** - Unit testing framework
 - **Hardhat 2.22.12** - Ethereum development environment
+
+## 🔄 Redux to Zustand Migration
+
+### Migration Overview
+The project has been successfully migrated from Redux to Zustand for improved performance and developer experience.
+
+### Key Improvements
+- **Bundle Size**: Reduced by ~10KB (no Redux dependencies)
+- **Performance**: Reactive hooks only re-render when relevant data changes
+- **Developer Experience**: Simpler state management with less boilerplate
+- **Type Safety**: Better TypeScript support out of the box
+
+### State Structure
+```javascript
+// Before (Redux)
+const state = {
+  provider: { connection, chainId, account, balance },
+  tokens: { contracts, symbols, balances },
+  exchange: { contract, orders, transactions }
+}
+
+// After (Zustand)
+const providerStore = { connection, chainId, account, balance, actions... }
+const tokensStore = { contracts, symbols, balances, actions... }
+const exchangeStore = { contract, orders, transactions, actions... }
+```
+
+### Usage Examples
+```javascript
+// Before (Redux)
+import { useSelector, useDispatch } from 'react-redux'
+const account = useSelector(state => state.provider.account)
+const dispatch = useDispatch()
+
+// After (Zustand)
+import useProviderStore from '../store/providerStore'
+const account = useProviderStore(state => state.account)
+// Actions are called directly on the store
+```
+
+### Custom Selectors
+```javascript
+// Reactive custom hooks for complex data
+import { useOrderBookSelector } from '../store/zustandSelectors'
+
+const MyComponent = () => {
+  const orderBook = useOrderBookSelector() // Automatically reactive
+  return <div>{orderBook.buyOrders.length} buy orders</div>
+}
+```
+
+## ⛓️ Blockchain Setup & Troubleshooting
+
+### Complete Setup Guide
+
+#### Step 1: Start Local Blockchain
+```bash
+# Terminal 1 - Start Hardhat node
+npm run hardhat:node
+
+# Expected output:
+# Started HTTP and WebSocket JSON-RPC server at http://127.0.0.1:8545/
+# 
+# Accounts
+# ========
+# Account #0: 0xf39F... (10000 ETH) - Private Key: 0xac09...
+# Account #1: 0x7099... (10000 ETH) - Private Key: 0x59c6...
+```
+
+#### Step 2: Deploy Smart Contracts
+```bash
+# Terminal 2 - Deploy contracts
+npm run deploy:local
+
+# Expected output:
+# Deploying contracts with the account: 0xf39F...
+# Exchange deployed to: 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9
+# SSS deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+# mETH deployed to: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+```
+
+#### Step 3: Seed Test Data
+```bash
+# Terminal 2 - Add sample orders and balances
+npm run seed:local
+
+# Expected output:
+# Transferring tokens...
+# Creating sample orders...
+# ✅ Exchange seeded successfully!
+```
+
+#### Step 4: Configure MetaMask
+1. **Add Local Network**:
+   - Network Name: `Hardhat Local`
+   - RPC URL: `http://localhost:8545`
+   - Chain ID: `31337`
+   - Currency Symbol: `ETH`
+
+2. **Import Test Account**:
+   - Copy private key from Step 1 output
+   - MetaMask → Import Account → Private Key
+   - Paste: `0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80`
+
+3. **Verify Setup**:
+   - Should see ~10000 ETH in imported account
+   - Should see SSS and mETH token balances in the app
+
+### Common Issues & Solutions
+
+#### Issue: "Cannot read properties of undefined (reading 'length')"
+**Cause**: Components rendering before blockchain data loads
+**Solution**: Enhanced null safety in selectors (already implemented)
+```javascript
+// Fixed in zustandSelectors.js
+if (!tokens || tokens.length < 2 || !orders) return []
+```
+
+#### Issue: Deposit/Withdraw Buttons Don't Work
+**Symptoms**:
+- Can see token balances
+- Deposit/withdraw amount input works
+- Button click does nothing or shows error
+
+**Troubleshooting Steps**:
+```bash
+# 1. Check browser console for errors
+# Look for: MetaMask errors, transaction rejections, gas issues
+
+# 2. Verify contracts are deployed
+curl -X POST -H "Content-Type: application/json" \
+  --data '{"jsonrpc":"2.0","method":"eth_getCode","params":["0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9","latest"],"id":1}' \
+  http://localhost:8545
+
+# 3. Check MetaMask network
+# Should be connected to localhost:8545, Chain ID: 31337
+
+# 4. Verify account has tokens
+# In browser console:
+localStorage.clear() # Clear any cached data
+location.reload()    # Reload page
+```
+
+**Common Fixes**:
+1. **Insufficient Balance**: Make sure you ran `npm run seed:local`
+2. **Wrong Network**: Switch MetaMask to Hardhat Local (31337)
+3. **Gas Issues**: Ensure account has ETH for gas fees
+4. **Contract Address**: Check config.json has correct addresses
+
+#### Issue: "Transaction Failed" or "User Rejected"
+**Error Handling**: The app now shows specific error messages:
+```javascript
+// Enhanced error messages in interactions.js
+if (error.message.includes('insufficient funds')) {
+  showToast('Insufficient balance for this transaction', 'error')
+} else if (error.message.includes('user rejected')) {
+  showToast('Transaction rejected by user', 'error')
+} else {
+  showToast(`Transaction failed: ${error.message}`, 'error')
+}
+```
+
+#### Issue: Balance Shows 0 Despite Having Tokens
+**Cause**: App connected to wrong network or using wrong account
+**Solution**:
+```bash
+# 1. Check network in app console
+console.log('Current chainId:', window.ethereum.chainId)
+# Should be: 0x7A69 (31337 in hex)
+
+# 2. Check connected account
+console.log('Connected account:', window.ethereum.selectedAddress)
+# Should match imported Hardhat account
+
+# 3. Force refresh balances
+localStorage.clear()
+location.reload()
+```
+
+#### Issue: "Network Mismatch" or "Unsupported Network"
+**Fix**:
+```javascript
+// Verify network configuration in config.json
+{
+  "31337": {  // Hardhat local
+    "exchange": { "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9" },
+    "SSS": { "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3" },
+    "mETH": { "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512" }
+  }
+}
+```
+
+### Network-Specific Setup
+
+#### Localhost (Development)
+```bash
+# Complete setup
+npm run hardhat:node     # Start blockchain
+npm run deploy:local     # Deploy contracts  
+npm run seed:local       # Add test data
+npm run dev             # Start frontend
+```
+
+#### Sepolia Testnet
+```bash
+# Deploy to Sepolia
+npm run deploy:goerli    # Note: script name is goerli but deploys to Sepolia
+npm run seed:goerli      # Add test data to Sepolia
+
+# MetaMask setup:
+# - Network: Sepolia Testnet
+# - Get test ETH from Sepolia faucet
+# - Import tokens manually: Add token → Custom → Paste addresses
+```
+
+#### Mainnet (Production)
+```bash
+# ⚠️ CAUTION: Real money involved
+npm run deploy:mainnet
+# MetaMask: Ethereum Mainnet
+# Ensure sufficient ETH for gas fees
+```
+
+### Manual Token Import (MetaMask)
+If tokens don't appear automatically:
+
+1. **Get token addresses** from `src/config.json`
+2. **MetaMask** → Assets → Import Tokens
+3. **Custom Token** → Paste addresses:
+   - SSS Token: `0x5FbDB2315678afecb367f032d93F642f64180aa3`
+   - mETH Token: `0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512`
+
+### Development Workflow
+```bash
+# Full development cycle
+npm run hardhat:node     # Terminal 1: Blockchain
+npm run deploy:local     # Terminal 2: Deploy once
+npm run seed:local       # Terminal 2: Seed once  
+npm run dev             # Terminal 3: Frontend dev server
+
+# Reset blockchain (if needed)
+# Ctrl+C in Terminal 1, then restart hardhat:node
+# Redeploy and reseed
+```
 
 ## 🎯 Core Components
 
@@ -969,7 +1234,7 @@ test/
 
 #### Deploy Script
 ```javascript
-// scripts/deploy.js
+// scripts/deploy.cjs (CommonJS format)
 const { ethers } = require('hardhat')
 
 async function main() {

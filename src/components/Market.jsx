@@ -1,18 +1,16 @@
-import { useSelector, useDispatch } from 'react-redux'
-
 import config from '../config.json'
 
 import { loadToken } from '../store/interactions'
+import useProviderStore from '../store/providerStore'
 
 const Market = () => {
-  const provider = useSelector(state => state.provider.connection)
-  const chainId = useSelector(state => state.provider.chainId)
+  const provider = useProviderStore((state) => state.connection)
+  const chainId = useProviderStore((state) => state.chainId)
   console.log(chainId)
   console.log(config[chainId])
-  const dispatch = useDispatch()
 
   const marketHandler = async (e) => {
-    loadToken(provider, (e.target.value).split(','), dispatch)
+    loadToken(provider, (e.target.value).split(','))
   }
 
   return (

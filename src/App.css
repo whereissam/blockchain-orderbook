@@ -9,6 +9,12 @@
   --clr-blue: #2187d0;
   --clr-red: #f45353;
   --clr-green: #25ce8f;
+  
+  /* New UX colors */
+  --clr-orange: #ff9500;
+  --clr-yellow: #ffcc00;
+  --clr-disabled: #3a3f4b;
+  --clr-disabled-text: #5a5f6b;
 }
 
 * {
@@ -1014,4 +1020,191 @@ table td {
 .network-menu button:disabled {
   color: var(--clr-neutral);
   cursor: not-allowed;
+}
+
+/* ------------------------------------------------------ */
+/* -- Enhanced UX Components -- */
+
+/* Connection Status */
+.connection-status {
+  background: var(--clr-secondary);
+  border: 1px solid var(--clr-neutral);
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.status-dot.connected {
+  background: var(--clr-green);
+}
+
+.status-dot.connecting {
+  background: var(--clr-yellow);
+  animation: connecting-pulse 1s infinite;
+}
+
+.status-dot.disconnected {
+  background: var(--clr-orange);
+}
+
+.status-text {
+  font-weight: 500;
+  color: var(--clr-white);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes connecting-pulse {
+  0% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.2);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+/* Setup Instructions */
+.setup-instructions {
+  background: rgba(255, 149, 0, 0.1);
+  border: 1px solid var(--clr-orange);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.setup-instructions h3 {
+  color: var(--clr-orange);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.setup-instructions ol {
+  color: var(--clr-white);
+  padding-left: 1.5rem;
+}
+
+.setup-instructions li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.setup-instructions code {
+  background: var(--clr-primary);
+  color: var(--clr-yellow);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+}
+
+.setup-instructions a {
+  color: var(--clr-blue);
+  text-decoration: underline;
+}
+
+.setup-instructions a:hover {
+  color: var(--clr-white);
+}
+
+/* Enhanced Form Styling */
+.exchange__transfers--form.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.exchange__transfers--form.disabled::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(13, 18, 29, 0.7);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.input-disabled {
+  background: var(--clr-disabled) !important;
+  color: var(--clr-disabled-text) !important;
+  cursor: not-allowed !important;
+}
+
+.input-disabled::placeholder {
+  color: var(--clr-disabled-text) !important;
+}
+
+.input-help {
+  display: block;
+  color: var(--clr-orange);
+  font-size: 0.8rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
+/* Enhanced Button States */
+.button:disabled {
+  background: var(--clr-disabled) !important;
+  color: var(--clr-disabled-text) !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+.button:disabled:hover {
+  transform: none !important;
+}
+
+/* Loading States */
+.loading-text {
+  color: var(--clr-neutral);
+  font-style: italic;
+}
+
+/* Improved button with tooltip */
+.button[title]:disabled {
+  position: relative;
+}
+
+.button[title]:disabled:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--clr-primary);
+  color: var(--clr-white);
+  padding: 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  z-index: 1000;
+  border: 1px solid var(--clr-neutral);
 }

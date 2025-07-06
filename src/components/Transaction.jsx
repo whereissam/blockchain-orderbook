@@ -1,20 +1,20 @@
 import { useRef, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
-import { myOpenOrdersSelector, myFilledOrdersSelector } from '../store/selector'
+import { useMyOpenOrdersSelector, useMyFilledOrdersSelector } from '../store/zustandSelectors'
 import sort from '../assets/sort.svg'
 import Banner from "./Banner"
 import { cancelOrder } from '../store/interactions'
+import useProviderStore from '../store/providerStore'
+import useTokensStore from '../store/tokensStore'
+import useExchangeStore from '../store/exchangeStore'
 
 const Transactions = () => {
   const [showMyOrders, setShowMyOrders] = useState(true)
 
-  const provider = useSelector(state => state.provider.connection)
-  const exchange = useSelector(state => state.exchange.contract)
-  const symbols = useSelector(state => state.tokens.symbols)
-  const myOpenOrders = useSelector(myOpenOrdersSelector)
-  const myFilledOrders = useSelector(myFilledOrdersSelector)
-
-  const dispatch = useDispatch()
+  const provider = useProviderStore((state) => state.connection)
+  const exchange = useExchangeStore((state) => state.contract)
+  const symbols = useTokensStore((state) => state.symbols)
+  const myOpenOrders = useMyOpenOrdersSelector()
+  const myFilledOrders = useMyFilledOrdersSelector()
 
   const tradeRef = useRef(null)
   const orderRef = useRef(null)
@@ -32,7 +32,7 @@ const Transactions = () => {
   }
 
   const cancelHandler = (order) => {
-    cancelOrder(provider, exchange, order, dispatch)
+    cancelOrder(provider, exchange, order)
   }
 
   return (

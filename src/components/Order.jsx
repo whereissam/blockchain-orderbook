@@ -1,18 +1,18 @@
 import { useState, useRef } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
 
 import { makeBuyOrder, makeSellOrder } from '../store/interactions'
+import useProviderStore from '../store/providerStore'
+import useTokensStore from '../store/tokensStore'
+import useExchangeStore from '../store/exchangeStore'
 
 const Order = () => {
   const [isBuy, setIsBuy] = useState(true)
   const [amount, setAmount] = useState(0)
   const [price, setPrice] = useState(0)
 
-  const provider = useSelector(state => state.provider.connection)
-  const tokens = useSelector(state => state.tokens.contracts)
-  const exchange = useSelector(state => state.exchange.contract)
-
-  const dispatch = useDispatch()
+  const provider = useProviderStore((state) => state.connection)
+  const tokens = useTokensStore((state) => state.contracts)
+  const exchange = useExchangeStore((state) => state.contract)
 
   const buyRef = useRef(null)
   const sellRef = useRef(null)
@@ -31,14 +31,14 @@ const Order = () => {
 
   const buyHandler = (e) => {
     e.preventDefault()
-    makeBuyOrder(provider, exchange, tokens, { amount, price }, dispatch)
+    makeBuyOrder(provider, exchange, tokens, { amount, price })
     setAmount(0)
     setPrice(0)
   }
 
   const sellHandler = (e) => {
     e.preventDefault()
-    makeSellOrder(provider, exchange, tokens, { amount, price }, dispatch)
+    makeSellOrder(provider, exchange, tokens, { amount, price })
     setAmount(0)
     setPrice(0)
   }

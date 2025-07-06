@@ -1,12 +1,12 @@
-import { useSelector } from "react-redux"
-import { filledOrdersSelector } from '../store/selector'
+import { useFilledOrdersSelector } from '../store/zustandSelectors'
 import sort from '../assets/sort.svg'
 import Banner from "./Banner"
+import useTokensStore from '../store/tokensStore'
 
 const Trades = () => {
-  const symbols = useSelector(state => state.tokens.symbols)
+  const symbols = useTokensStore((state) => state.symbols)
   // console.log(symbols)
-  const filledOrders = useSelector(filledOrdersSelector)
+  const filledOrders = useFilledOrdersSelector()
 
 
   // console.log(filledOrders)

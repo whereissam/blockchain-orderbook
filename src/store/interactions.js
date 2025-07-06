@@ -1,142 +1,158 @@
 import { ethers, formatUnits } from 'ethers'
 import TOKEN_ABI from '../abis/Token.json'
 import EXCHANGE_ABI from '../abis/Exchange.json'
-// import { exchange } from './reducers'
+import useProviderStore from './providerStore'
+import useTokensStore from './tokensStore'
+import useExchangeStore from './exchangeStore'
 
 //1. Load provider(Login wallet) - get the connection info
-export const loadProvider = (dispatch) => {
+export const loadProvider = () => {
+  if (!window.ethereum) {
+    console.log('MetaMask not detected')
+    return null
+  }
+  
   const connection = new ethers.BrowserProvider(window.ethereum)
-  dispatch({ type: 'PROVIDER_LOADED', connection })
-  // console.log('loadProvider')
+  useProviderStore.getState().loadProvider(connection)
   return connection
 }
 
 //2. Load provider network(Login wallet) - get the network info
-export const loadNetwork = async (provider, dispatch) => {
+export const loadNetwork = async (provider) => {
   const { chainId } = await provider.getNetwork()
   console.log(chainId)
-  // Convert BigInt to number for Redux serialization
+  // Convert BigInt to number for serialization
   const chainIdNumber = Number(chainId)
-  dispatch({ type: 'NETWORK_LOADED', chainId: chainIdNumber })
-  // console.log('loadNetwork')
+  useProviderStore.getState().loadNetwork(chainIdNumber)
   return chainIdNumber
 }
 
 //3. Load provider account(Login wallet) - get the account info & balance
-export const loadAccount = async (provider, dispatch) => {
-  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+export const loadAccount = async (provider) => {
+  try {
+    // First try to get existing accounts without requesting permission
+    let accounts = await window.ethereum.request({ method: 'eth_accounts' })
+    
+    // If no accounts, then request permission
+    if (accounts.length === 0) {
+      accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+    }
 
-  const account = ethers.getAddress(accounts[0])
-  dispatch({ type: 'ACCOUNT_LOADED', account })
+    if (accounts.length === 0) {
+      console.log('No accounts available')
+      return null
+    }
 
-  let balance = await provider.getBalance(account)
-  balance = ethers.formatEther(balance)
+    const account = ethers.getAddress(accounts[0])
+    useProviderStore.getState().loadAccount(account)
 
-  dispatch({ type: 'ETHER_BALANCE_LOADED', balance })
+    let balance = await provider.getBalance(account)
+    balance = ethers.formatEther(balance)
 
-  return account
+    useProviderStore.getState().loadEtherBalance(balance)
+
+    return account
+  } catch (error) {
+    console.error('Failed to load account:', error)
+    return null
+  }
 }
 
 //4. Load provider token(have two tokens)(Login wallet) - get the two tokens
-export const loadToken = async (provider, addresses, dispatch) => {
+export const loadToken = async (provider, addresses) => {
   let token, symbol
 
-  // console.log(addresses[0])
   token = new ethers.Contract(addresses[0], TOKEN_ABI, provider)
-  symbol = await token.symbol() //sss
-  // console.log(symbol)
-  dispatch({ type: 'TOKEN_1_LOADED', token, symbol })
+  symbol = await token.symbol()
+  useTokensStore.getState().loadToken1(token, symbol)
 
   token = new ethers.Contract(addresses[1], TOKEN_ABI, provider)
-  symbol = await token.symbol() //mETH
-  dispatch({ type: 'TOKEN_2_LOADED', token, symbol })
+  symbol = await token.symbol()
+  useTokensStore.getState().loadToken2(token, symbol)
 
   return token
 }
 
 // 5. load provider exchange (Login wallet) - get the exchange 
-export const loadExchange = async (provider, address, dispatch) => {
-  // console.log(address)
+export const loadExchange = async (provider, address) => {
   const exchange = new ethers.Contract(address, EXCHANGE_ABI, provider)
-  // console.log(exchange)
-  dispatch({ type: 'EXCHANGE_LOADED', exchange })
-
+  useExchangeStore.getState().loadExchange(exchange)
   return exchange
 }
 
-export const subscribeToEvents = (exchange, dispatch) => {
+export const subscribeToEvents = (exchange) => {
+  const exchangeStore = useExchangeStore.getState()
+
   exchange.on('Cancel', (id, user, tokenGet, amountGet, tokenGive, amountGive, timestamp, event) => {
     const order = event.args
-    dispatch({ type: 'ORDER_CANCEL_SUCCESS', order, event })
+    exchangeStore.cancelOrderSuccess(order, event)
   })
 
   exchange.on('Trade', (id, user, tokenGet, amountGet, tokenGive, amountGive, creator, timestamp, event) => {
     const order = event.args
     console.log('trade', order)
-    dispatch({ type: 'ORDER_FILL_SUCCESS', order, event })
+    exchangeStore.fillOrderSuccess(order, event)
   })
 
   exchange.on('Deposit', (token, user, amount, balance, event) => {
-    // console.log('Deposit')
-    dispatch({ type: 'TRANSFER_SUCCESS', event })
+    exchangeStore.transferSuccess(event)
   })
 
   exchange.on('Withdraw', (token, user, amount, balance, event) => {
-    // console.log('Withdraw')
-    dispatch({ type: 'TRANSFER_SUCCESS', event })
+    exchangeStore.transferSuccess(event)
   })
 
   exchange.on('Order', (id, user, tokenGet, amountGet, tokenGive, amountGive, timestamp, event) => {
     const order = event.args
-    dispatch({ type: 'NEW_ORDER_SUCCESS', order, event })
+    exchangeStore.newOrderSuccess(order, event)
   })
 }
 
 //Load user balances ( wallet & exchange balances)
-
-export const loadBalances = async (exchange, tokens, account, dispatch) => {
+export const loadBalances = async (exchange, tokens, account) => {
+  const tokensStore = useTokensStore.getState()
+  const exchangeStore = useExchangeStore.getState()
 
   let balance = formatUnits(await tokens[0].balanceOf(account), 18)
-  dispatch({ type: 'TOKEN_1_BALANCE_LOADED', balance })
+  tokensStore.loadToken1Balance(balance)
 
   balance = formatUnits(await exchange.balanceOf(tokens[0].address, account), 18)
-  dispatch({ type: 'EXCHANGE_TOKEN_1_BALANCE_LOADED', balance })
+  exchangeStore.loadExchangeToken1Balance(balance)
 
   balance = formatUnits(await tokens[1].balanceOf(account), 18)
-  dispatch({ type: 'TOKEN_2_BALANCE_LOADED', balance })
+  tokensStore.loadToken2Balance(balance)
 
   balance = formatUnits(await exchange.balanceOf(tokens[1].address, account), 18)
-  dispatch({ type: 'EXCHANGE_TOKEN_2_BALANCE_LOADED', balance })
+  exchangeStore.loadExchangeToken2Balance(balance)
 }
 
 //Load all orders
-export const loadAllOrders = async (provider, exchange, dispatch) => {
+export const loadAllOrders = async (provider, exchange) => {
+  const exchangeStore = useExchangeStore.getState()
   const block = await provider.getBlockNumber()
-  // console.log(block)
 
   //Fetch cancel orders
-  const cancelStream = await exchange.queryFilter('Cancel', 0, block) //From block 0 to block tail
+  const cancelStream = await exchange.queryFilter('Cancel', 0, block)
   const cancelledOrders = cancelStream.map(event => event.args)
-  dispatch({ type: 'CANCELLED_ORDERS_LOADED', cancelledOrders })
+  exchangeStore.loadCancelledOrders(cancelledOrders)
 
   //Fetch filled orders
   const tradeStream = await exchange.queryFilter('Trade', 0, block)
   const filledOrders = tradeStream.map(event => event.args)
-  dispatch({ type: 'FILLED_ORDERS_LOADED', filledOrders })
+  exchangeStore.loadFilledOrders(filledOrders)
 
   //Fetch all orders
   const orderStream = await exchange.queryFilter('Order', 0, block)
   const allOrders = orderStream.map(event => event.args)
-
-  dispatch({ type: 'ALL_ORDERS_LOADED', allOrders })
+  exchangeStore.loadAllOrders(allOrders)
 }
 
 //Transfer tokens ( deposit & withdraw)
-
-export const transferTokens = async (provider, exchange, transferType, token, amount, dispatch) => {
+export const transferTokens = async (provider, exchange, transferType, token, amount) => {
+  const exchangeStore = useExchangeStore.getState()
   let transaction
 
-  dispatch({ type: 'TRANSFER_REQUEST' })
+  exchangeStore.transferRequest()
 
   try {
     const signer = await provider.getSigner()
@@ -151,88 +167,87 @@ export const transferTokens = async (provider, exchange, transferType, token, am
     }
     await transaction.wait()
     
-    // Dispatch success action when transfer completes
-    dispatch({ type: 'TRANSFER_SUCCESS' })
+    exchangeStore.transferSuccess(null)
   } catch (error) {
-    console.error(error)
-    dispatch({ type: 'TRANSFER_FAIL' })
+    console.error('Transfer failed:', error)
+    if (window.showToast) {
+      if (error.message.includes('insufficient funds')) {
+        window.showToast('Insufficient balance for this transaction', 'error', 4000)
+      } else if (error.message.includes('user rejected')) {
+        window.showToast('Transaction rejected by user', 'error', 3000)
+      } else {
+        window.showToast(`Transaction failed: ${error.message}`, 'error', 4000)
+      }
+    }
+    exchangeStore.transferFail()
   }
-
 }
 
 // Orders ( buy & sell )
-
-export const makeBuyOrder = async (provider, exchange, tokens, order, dispatch) => {
-  // address _tokenGet,
-  // uint256 _amountGet, 
-  // address _tokenGive,
-  // uint256 _amountGive (orderAmount * orderPrice)
+export const makeBuyOrder = async (provider, exchange, tokens, order) => {
+  const exchangeStore = useExchangeStore.getState()
+  
   const tokenGet = tokens[0].address
   const amountGet = ethers.parseUnits(order.amount, 18)
   const tokenGive = tokens[1].address
   const amountGive = ethers.parseUnits((order.amount * order.price).toString(), 18)
 
-  dispatch({ type: 'NEW_ORDER_REQUEST' })
+  exchangeStore.newOrderRequest()
 
   try {
     const signer = await provider.getSigner()
     const transaction = await exchange.connect(signer).makeOrder(tokenGet, amountGet, tokenGive, amountGive)
-    await transaction.Wait()
+    await transaction.wait()
   } catch (error) {
-    dispatch({ type: 'NEW_ORDER_FAIL' })
+    exchangeStore.newOrderFail()
   }
-
 }
 
-export const makeSellOrder = async (provider, exchange, tokens, order, dispatch) => {
-  // address _tokenGet,
-  // uint256 _amountGet, 
-  // address _tokenGive,
-  // uint256 _amountGive (orderAmount * orderPrice)
+export const makeSellOrder = async (provider, exchange, tokens, order) => {
+  const exchangeStore = useExchangeStore.getState()
+  
   const tokenGet = tokens[1].address
   const amountGet = ethers.parseUnits((order.amount * order.price).toString(), 18)
   const tokenGive = tokens[0].address
   const amountGive = ethers.parseUnits(order.amount, 18)
 
-  dispatch({ type: 'NEW_ORDER_REQUEST' })
+  exchangeStore.newOrderRequest()
 
   try {
     const signer = await provider.getSigner()
     const transaction = await exchange.connect(signer).makeOrder(tokenGet, amountGet, tokenGive, amountGive)
-    await transaction.Wait()
+    await transaction.wait()
   } catch (error) {
-    dispatch({ type: 'NEW_ORDER_FAIL' })
+    exchangeStore.newOrderFail()
   }
-
 }
 
-//----------------------------------------------------------------------------------------------
 // Cancel order
-
-export const cancelOrder = async (provider, exchange, order, dispatch) => {
-  dispatch({ type: 'CANCEL_ORDER_REQUEST' })
+export const cancelOrder = async (provider, exchange, order) => {
+  const exchangeStore = useExchangeStore.getState()
+  
+  exchangeStore.cancelOrderRequest()
 
   try {
     const signer = await provider.getSigner()
     const transaction = await exchange.connect(signer).cancelOrder(order.id)
-    await transaction.Wait()
+    await transaction.wait()
   } catch (error) {
-    dispatch({ type: 'ORDER_CANCEL_FAIL' })
+    exchangeStore.cancelOrderFail()
   }
 }
 
-
-//----------------------------------------------------------------------------------------------
 // Fill order
-
-export const fillOrder = async (provider, exchange, order, dispatch) => {
-  dispatch({ type: 'ORDER_FILL_REQUEST' })
+export const fillOrder = async (provider, exchange, order) => {
+  const exchangeStore = useExchangeStore.getState()
+  
+  exchangeStore.fillOrderRequest()
 
   try {
     const signer = await provider.getSigner()
     const transaction = await exchange.connect(signer).fillOrder(order.id)
-    await transaction.Wait()
+    await transaction.wait()
   } catch (error) {
-    dispatch({ type: 'ORDER_FILL_FAIL' })
+    exchangeStore.fillOrderFail()
   }
 }

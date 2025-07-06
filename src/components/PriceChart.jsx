@@ -1,5 +1,3 @@
-import { useSelector } from "react-redux"
-
 import Chart from 'react-apexcharts'
 
 import arrowDown from '../assets/down-arrow.svg'
@@ -7,14 +5,16 @@ import arrowUp from '../assets/up-arrow.svg'
 
 import { options, defaultSeries } from "./PriceChart.config"
 
-import { priceChartSelector } from "../store/selector"
+import { usePriceChartSelector } from "../store/zustandSelectors"
 
 import Banner from "./Banner"
+import useProviderStore from '../store/providerStore'
+import useTokensStore from '../store/tokensStore'
 
 const PriceChart = () => {
-  const account = useSelector(state => state.provider.account)
-  const symbols = useSelector(state => state.tokens.symbols)
-  const priceChart = useSelector(priceChartSelector)
+  const account = useProviderStore((state) => state.account)
+  const symbols = useTokensStore((state) => state.symbols)
+  const priceChart = usePriceChartSelector()
 
   return (
     <div className="component exchange__chart">

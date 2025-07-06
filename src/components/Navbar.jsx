@@ -1,25 +1,27 @@
-import { useSelector, useDispatch } from 'react-redux'
 import { useState } from 'react'
 import Blockies from 'react-blockies'
 import { loadProvider, loadAccount } from '../store/interactions'
+import useProviderStore from '../store/providerStore'
 import config from '../config.json'
 import logo from '../assets/logo.png'
 import eth from '../assets/eth.svg'
+
 const Navbar = () => {
-  const provider = useSelector(state => state.provider.connection)
-  const chainId = useSelector(state => state.provider.chainId)
-  const account = useSelector(state => state.provider.account)
-  const balance = useSelector(state => state.provider.balance)
+  const provider = useProviderStore(state => state.connection)
+  const chainId = useProviderStore(state => state.chainId)
+  const account = useProviderStore(state => state.account)
+  const balance = useProviderStore(state => state.balance)
+  const disconnectProvider = useProviderStore(state => state.disconnectProvider)
+  
   const [showDropdown, setShowDropdown] = useState(false)
   const [showNetworkDropdown, setShowNetworkDropdown] = useState(false)
 
-  const dispatch = useDispatch()
   const connectHandler = async () => {
     try {
       // Load provider first if it doesn't exist
-      const currentProvider = provider || loadProvider(dispatch)
+      const currentProvider = provider || loadProvider()
       // Then load account
-      await loadAccount(currentProvider, dispatch)
+      await loadAccount(currentProvider)
     } catch (error) {
       console.error('Failed to connect wallet:', error)
       if (window.showToast) {
@@ -38,8 +40,7 @@ const Navbar = () => {
   }
 
   const disconnectHandler = () => {
-    dispatch({ type: 'ACCOUNT_DISCONNECTED' })
-    dispatch({ type: 'PROVIDER_DISCONNECTED' })
+    disconnectProvider()
   }
 
 

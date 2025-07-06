@@ -1,24 +1,23 @@
-import { useSelector, useDispatch } from 'react-redux'
-
 // Import Assets
 import sort from '../assets/sort.svg'
 
 // Import Selectors
-import { orderBookSelector } from '../store/selector'
+import { useOrderBookSelector } from '../store/zustandSelectors'
 
 // Import Interactions
 import { fillOrder } from '../store/interactions'
-import { exchange, provider } from '../store/reducers'
+import useProviderStore from '../store/providerStore'
+import useTokensStore from '../store/tokensStore'
+import useExchangeStore from '../store/exchangeStore'
 
 const OrderBook = () => {
-  const provider = useSelector(state => state.provider.connection)
-  const exchange = useSelector(state => state.exchange.contract)
-  const symbols = useSelector(state => state.tokens.symbols)
-  const orderBook = useSelector(orderBookSelector)
-  const dispatch = useDispatch()
+  const provider = useProviderStore((state) => state.connection)
+  const exchange = useExchangeStore((state) => state.contract)
+  const symbols = useTokensStore((state) => state.symbols)
+  const orderBook = useOrderBookSelector()
 
   const fillOrderedHandler = (order) => {
-    fillOrder(provider, exchange, order, dispatch)
+    fillOrder(provider, exchange, order)
   }
 
   return (
