@@ -383,40 +383,132 @@ export const transferTokens = async (provider, exchange, transferType, token, am
 
 // Orders ( buy & sell )
 export const makeBuyOrder = async (provider, exchange, tokens, order) => {
-  const exchangeStore = useExchangeStore.getState()
-  
-  const tokenGet = tokens[0].address
-  const amountGet = ethers.parseUnits(order.amount, 18)
-  const tokenGive = tokens[1].address
-  const amountGive = ethers.parseUnits((order.amount * order.price).toString(), 18)
-
-  exchangeStore.newOrderRequest()
-
   try {
+    console.log('🛒 Creating buy order:', { amount: order.amount, price: order.price })
+    
+    if (!provider || !exchange || !tokens || tokens.length < 2) {
+      throw new Error('Missing required components for order creation')
+    }
+
+    if (!order.amount || !order.price || order.amount <= 0 || order.price <= 0) {
+      throw new Error('Invalid order amount or price')
+    }
+
+    const exchangeStore = useExchangeStore.getState()
+    
+    const tokenGet = tokens[0].address || tokens[0].target
+    const amountGet = ethers.parseUnits(order.amount.toString(), 18)
+    const tokenGive = tokens[1].address || tokens[1].target
+    const amountGive = ethers.parseUnits((order.amount * order.price).toString(), 18)
+
+    console.log('🔍 Order details:', {
+      tokenGet,
+      amountGet: ethers.formatEther(amountGet),
+      tokenGive,
+      amountGive: ethers.formatEther(amountGive)
+    })
+
+    exchangeStore.newOrderRequest()
+
+    // Show loading toast for order creation
+    if (window.blockchainToasts) {
+      window.blockchainToasts.orderCreating('buy', order.amount, order.price)
+    }
+
     const signer = await provider.getSigner()
     const transaction = await exchange.connect(signer).makeOrder(tokenGet, amountGet, tokenGive, amountGive)
+    
+    console.log('📝 Transaction sent:', transaction.hash)
+    
+    // Show pending transaction toast
+    if (window.blockchainToasts) {
+      window.blockchainToasts.transactionPending(transaction.hash)
+    }
+    
     await transaction.wait()
+    
+    console.log('✅ Buy order created successfully')
+    
+    // Show success toast with transaction link
+    if (window.blockchainToasts) {
+      window.blockchainToasts.orderSuccess('Buy', order.amount, order.price, transaction.hash)
+    }
+    
+    exchangeStore.newOrderSuccess()
   } catch (error) {
+    console.error('❌ Error creating buy order:', error)
+    const exchangeStore = useExchangeStore.getState()
     exchangeStore.newOrderFail()
+    
+    // Show enhanced error toast
+    if (window.blockchainToasts) {
+      window.blockchainToasts.orderError('buy', error)
+    }
   }
 }
 
 export const makeSellOrder = async (provider, exchange, tokens, order) => {
-  const exchangeStore = useExchangeStore.getState()
-  
-  const tokenGet = tokens[1].address
-  const amountGet = ethers.parseUnits((order.amount * order.price).toString(), 18)
-  const tokenGive = tokens[0].address
-  const amountGive = ethers.parseUnits(order.amount, 18)
-
-  exchangeStore.newOrderRequest()
-
   try {
+    console.log('💰 Creating sell order:', { amount: order.amount, price: order.price })
+    
+    if (!provider || !exchange || !tokens || tokens.length < 2) {
+      throw new Error('Missing required components for order creation')
+    }
+
+    if (!order.amount || !order.price || order.amount <= 0 || order.price <= 0) {
+      throw new Error('Invalid order amount or price')
+    }
+
+    const exchangeStore = useExchangeStore.getState()
+    
+    const tokenGet = tokens[1].address || tokens[1].target
+    const amountGet = ethers.parseUnits((order.amount * order.price).toString(), 18)
+    const tokenGive = tokens[0].address || tokens[0].target
+    const amountGive = ethers.parseUnits(order.amount.toString(), 18)
+
+    console.log('🔍 Order details:', {
+      tokenGet,
+      amountGet: ethers.formatEther(amountGet),
+      tokenGive,
+      amountGive: ethers.formatEther(amountGive)
+    })
+
+    exchangeStore.newOrderRequest()
+
+    // Show loading toast for order creation
+    if (window.blockchainToasts) {
+      window.blockchainToasts.orderCreating('sell', order.amount, order.price)
+    }
+
     const signer = await provider.getSigner()
     const transaction = await exchange.connect(signer).makeOrder(tokenGet, amountGet, tokenGive, amountGive)
+    
+    console.log('📝 Transaction sent:', transaction.hash)
+    
+    // Show pending transaction toast
+    if (window.blockchainToasts) {
+      window.blockchainToasts.transactionPending(transaction.hash)
+    }
+    
     await transaction.wait()
+    
+    console.log('✅ Sell order created successfully')
+    
+    // Show success toast with transaction link
+    if (window.blockchainToasts) {
+      window.blockchainToasts.orderSuccess('Sell', order.amount, order.price, transaction.hash)
+    }
+    
+    exchangeStore.newOrderSuccess()
   } catch (error) {
+    console.error('❌ Error creating sell order:', error)
+    const exchangeStore = useExchangeStore.getState()
     exchangeStore.newOrderFail()
+    
+    // Show enhanced error toast
+    if (window.blockchainToasts) {
+      window.blockchainToasts.orderError('sell', error)
+    }
   }
 }
 
@@ -447,6 +539,80 @@ export const fillOrder = async (provider, exchange, order) => {
     await transaction.wait()
   } catch (error) {
     exchangeStore.fillOrderFail()
+  }
+}
+
+// Token Faucet - Request test tokens from the deployer
+export const claimTestTokens = async (provider, tokenAddress, tokenSymbol) => {
+  try {
+    console.log(`🪙 Claiming ${tokenSymbol} tokens...`)
+    
+    if (window.showToast) {
+      window.showToast(`Requesting ${tokenSymbol} tokens...`, 'info', 3000)
+    }
+
+    const signer = await provider.getSigner()
+    const userAddress = await signer.getAddress()
+    
+    // Try to call transfer function from deployer to user (if deployer has tokens)
+    const tokenContract = new ethers.Contract(tokenAddress, TOKEN_ABI, provider)
+    
+    // Check current balance
+    const currentBalance = await tokenContract.balanceOf(userAddress)
+    const balanceFormatted = ethers.formatEther(currentBalance)
+    const balanceNumber = parseFloat(balanceFormatted)
+    console.log(`ℹ️ Current ${tokenSymbol} balance: ${balanceFormatted}`)
+
+    // Use enhanced token claim toast
+    if (window.blockchainToasts) {
+      window.blockchainToasts.tokenClaim(tokenSymbol, balanceNumber)
+    }
+    
+    // Copy user address to clipboard if available
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(userAddress)
+        console.log('📋 Your address copied to clipboard')
+      } catch (e) {
+        console.log('📋 Could not copy to clipboard')
+      }
+    }
+
+    return true
+
+  } catch (error) {
+    console.error(`❌ Error claiming ${tokenSymbol} tokens:`, error)
+    if (window.showToast) {
+      window.showToast(`Failed to check ${tokenSymbol} balance: ${error.message}`, 'error', 5000)
+    }
+    return false
+  }
+}
+
+// Alternative: Check if user is deployer and can mint tokens
+export const mintTokensAsDeployer = async (provider, tokenAddress, tokenSymbol, amount) => {
+  try {
+    console.log(`🏭 Attempting to mint ${amount} ${tokenSymbol} tokens...`)
+    
+    const signer = await provider.getSigner()
+    const userAddress = await signer.getAddress()
+    
+    // Simple approach: try to transfer from the contract's initial supply
+    const tokenContract = new ethers.Contract(tokenAddress, TOKEN_ABI, signer)
+    
+    // Check the contract's balance and owner
+    const contractBalance = await tokenContract.balanceOf(tokenAddress)
+    console.log(`Contract ${tokenSymbol} balance:`, ethers.formatEther(contractBalance))
+    
+    if (window.showToast) {
+      window.showToast(`Minting not available. Contact deployer for test tokens.`, 'warning', 5000)
+    }
+    
+    return false
+    
+  } catch (error) {
+    console.error(`❌ Error minting ${tokenSymbol}:`, error)
+    return false
   }
 }
 

@@ -21,14 +21,10 @@ import PriceChart from './PriceChart'
 import Trades from './Trade'
 import Transactions from './Transaction'
 import Alert from './Alert'
-import Toast from './Toast'
-import { useToast } from '../hooks/useToast'
+import { Toaster } from './ui/sonner'
+import '../utils/toast.js' // This sets up the global toast functions
 
 function App () {
-  const { toasts, showToast, removeToast } = useToast()
-
-  // Make toast available globally
-  window.showToast = showToast
 
   const loadBlockchainData = useCallback(async () => {
     try {
@@ -41,7 +37,13 @@ function App () {
       if (!provider) {
         console.log('❌ No provider available - MetaMask not detected or not connected')
         if (window.showToast) {
-          window.showToast('MetaMask not detected. Please install MetaMask.', 'error', 5000)
+          window.showToast.error('MetaMask not detected', {
+            description: 'Please install MetaMask to continue',
+            action: {
+              label: 'Install',
+              onClick: () => window.open('https://metamask.io/', '_blank')
+            }
+          })
         }
         return
       }
@@ -177,16 +179,8 @@ function App () {
 
       <Alert />
 
-      {/* Toast Notifications */}
-      {toasts.map(toast => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          duration={toast.duration}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
+      {/* Sonner Toast Notifications */}
+      <Toaster position="top-right" richColors />
 
     </div>
   )

@@ -25,7 +25,9 @@ const PriceChart = () => {
     filledOrdersLoaded: filledOrders?.loaded,
     filledOrdersCount: filledOrders?.data?.length || 0,
     priceChartData: !!priceChart,
-    priceChartKeys: priceChart ? Object.keys(priceChart) : 'none'
+    priceChartKeys: priceChart ? Object.keys(priceChart) : 'none',
+    priceChartSeries: priceChart?.series?.length || 0,
+    lastPrice: priceChart?.lastPrice || 'none'
   })
 
   return (
@@ -56,7 +58,18 @@ const PriceChart = () => {
       {!account ? (
         <Banner text={'Please connect to metamask'} />
       ) : filledOrders?.data?.length === 0 ? (
-        <Banner text={'No trades yet. Make some orders to see the chart!'} />
+        <div className="text-center p-8">
+          <Banner text={'No trades yet. Create and fill orders to see price chart!'} />
+          <div className="mt-4 text-sm text-muted-foreground">
+            <p>To generate chart data:</p>
+            <ol className="text-left mt-2 space-y-1">
+              <li>1. 📥 Deposit tokens to the exchange</li>
+              <li>2. 📋 Create buy/sell orders</li>
+              <li>3. 🤝 Fill orders (yours or others)</li>
+              <li>4. 📊 Chart will show price movements</li>
+            </ol>
+          </div>
+        </div>
       ) : (
         <Chart
           type="candlestick"

@@ -14,7 +14,8 @@ import {
   loadBalances,
   transferTokens,
   loadProvider,
-  loadAccount
+  loadAccount,
+  claimTestTokens
 } from '../store/interactions'
 
 // Connection status component
@@ -29,7 +30,7 @@ const ConnectionStatus = ({ isConnected, hasTokens, message, actionText, onActio
         variant={isConnected && hasTokens ? 'default' : isLoading ? 'secondary' : 'outline'}
         onClick={onAction}
         disabled={isLoading}
-        className="mt-3"
+        className="mt-3 cursor-pointer hover:bg-accent disabled:cursor-not-allowed"
       >
         {actionText}
       </Button>
@@ -307,6 +308,7 @@ const Balance = () => {
       exchangeConstructor: exchange?.constructor?.name,
       hasBalanceOfMethod: typeof exchange?.balanceOf,
       stableTokens: !!stableTokens,
+      stableTokensAddresses: stableTokens?.map(t => t?.address || t?.target),
       account: !!account,
       willLoad: !!(exchange && stableTokens && account)
     })
@@ -326,6 +328,35 @@ const Balance = () => {
       console.log('Skipping balance load - missing requirements')
     }
   }, [exchange?.address, stableTokens?.[0]?.address, stableTokens?.[1]?.address, account])
+
+  // Token claim handlers
+  const handleClaimSSS = useCallback(async () => {
+    if (!provider || !stableTokens?.[0]) return
+    
+    try {
+      await claimTestTokens(provider, stableTokens[0].address, symbols?.[0] || 'SSS')
+      // Reload balances after claiming
+      setTimeout(() => {
+        loadBalancesCallback()
+      }, 2000)
+    } catch (error) {
+      console.error('Error claiming SSS:', error)
+    }
+  }, [provider, stableTokens, symbols, loadBalancesCallback])
+
+  const handleClaimETH = useCallback(async () => {
+    if (!provider || !stableTokens?.[1]) return
+    
+    try {
+      await claimTestTokens(provider, stableTokens[1].address, symbols?.[1] || 'mETH')
+      // Reload balances after claiming
+      setTimeout(() => {
+        loadBalancesCallback()
+      }, 2000)
+    } catch (error) {
+      console.error('Error claiming mETH:', error)
+    }
+  }, [provider, stableTokens, symbols, loadBalancesCallback])
 
   useEffect(() => {
     loadBalancesCallback()
@@ -453,23 +484,39 @@ const Balance = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <span className="text-muted-foreground font-medium">WALLET:</span>
-            <p className="font-mono text-lg font-semibold">
-              {isLoadingBalances ? 'Updating...' : 
-                (tokenBalances && tokenBalances[0] !== undefined ? tokenBalances[0] : 
-                  (!isReady ? 'Loading...' : '0'))}
-              {/* Debug info */}
-              {process.env.NODE_ENV === 'development' && (
-                <small className="block text-xs text-gray-500">
-                  Ready: {typeof isReady === 'boolean' ? (isReady ? 'true' : 'false') : `[${typeof isReady}]`} | 
-                  Tokens: {tokens?.length || 0} | 
-                  StableTokens: {stableTokens ? '✓' : '✗'} | 
-                  Balance: {tokenBalances?.[0] || 'none'} | 
-                  Loading: {isLoadingBalances ? 'true' : 'false'}
-                </small>
-              )}
-            </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-muted-foreground font-medium">WALLET:</span>
+              <p className="font-mono text-lg font-semibold">
+                {isLoadingBalances ? 'Updating...' : 
+                  (tokenBalances && tokenBalances[0] !== undefined ? tokenBalances[0] : 
+                    (!isReady ? 'Loading...' : '0'))}
+                {/* Debug info */}
+                {process.env.NODE_ENV === 'development' && (
+                  <small className="block text-xs text-gray-500">
+                    Ready: {typeof isReady === 'boolean' ? (isReady ? 'true' : 'false') : `[${typeof isReady}]`} | 
+                    Tokens: {tokens?.length || 0} | 
+                    StableTokens: {stableTokens ? '✓' : '✗'} | 
+                    Balance: {tokenBalances?.[0] || 'none'} | 
+                    Loading: {isLoadingBalances ? 'true' : 'false'}
+                    {tokenBalances?.[0] === '0' && (
+                      <div className="mt-2 text-yellow-600">
+                        ⚠️ You need {symbols?.[0] || 'SSS'} tokens to deposit. Contact the project deployer or check for a token faucet.
+                      </div>
+                    )}
+                  </small>
+                )}
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleClaimSSS}
+              disabled={!isConnected || !provider}
+              className="text-xs cursor-pointer hover:bg-accent"
+            >
+              🪙 Claim {symbols?.[0] || 'SSS'}
+            </Button>
           </div>
           
           <div className="flex items-center gap-3">
@@ -503,7 +550,7 @@ const Balance = () => {
           <Button 
             type='submit' 
             disabled={transferInProgress || !isReady}
-            className="w-full"
+            className="w-full cursor-pointer hover:opacity-90 disabled:cursor-not-allowed"
             variant={transferInProgress ? 'outline' : isReady ? (isDeposit ? 'default' : 'secondary') : 'outline'}
           >
             {transferInProgress ? 'Processing...' : !isReady ? 'Setup Required' : isDeposit ? 'Deposit' : 'Withdraw'}
@@ -529,13 +576,24 @@ const Balance = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            <span className="text-muted-foreground font-medium">WALLET:</span>
-            <p className="font-mono text-lg font-semibold">
-              {isLoadingBalances ? 'Updating...' : 
-                (tokenBalances && tokenBalances[1] !== undefined ? tokenBalances[1] : 
-                  (!isReady ? 'Loading...' : '0'))}
-            </p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="text-muted-foreground font-medium">WALLET:</span>
+              <p className="font-mono text-lg font-semibold">
+                {isLoadingBalances ? 'Updating...' : 
+                  (tokenBalances && tokenBalances[1] !== undefined ? tokenBalances[1] : 
+                    (!isReady ? 'Loading...' : '0'))}
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleClaimETH}
+              disabled={!isConnected || !provider}
+              className="text-xs cursor-pointer hover:bg-accent"
+            >
+              🪙 Claim {symbols?.[1] || 'mETH'}
+            </Button>
           </div>
           
           <div className="flex items-center gap-3">
@@ -569,7 +627,7 @@ const Balance = () => {
           <Button 
             type='submit' 
             disabled={transferInProgress || !isReady}
-            className="w-full"
+            className="w-full cursor-pointer hover:opacity-90 disabled:cursor-not-allowed"
             variant={transferInProgress ? 'outline' : isReady ? (isDeposit ? 'default' : 'secondary') : 'outline'}
           >
             {transferInProgress ? 'Processing...' : !isReady ? 'Setup Required' : isDeposit ? 'Deposit' : 'Withdraw'}

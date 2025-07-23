@@ -2,6 +2,19 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Ensure all interactive elements have proper cursor styling */
+button:not(:disabled), 
+[role="button"]:not([aria-disabled="true"]),
+.cursor-pointer {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+.cursor-not-allowed {
+  cursor: not-allowed;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
