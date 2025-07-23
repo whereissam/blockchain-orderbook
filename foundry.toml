@@ -1,6 +1,37 @@
 [profile.default]
-src = "src"
+src = "contracts"
 out = "out"
 libs = ["lib"]
+cache_path = "cache_forge"
+test = "test"
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+# Solidity compiler settings
+solc_version = "0.8.9"
+optimizer = true
+optimizer_runs = 1000000
+via_ir = false
+
+# Formatter settings
+line_length = 100
+tab_width = 4
+bracket_spacing = true
+
+# Gas reporting
+gas_reports = ["*"]
+
+# Remappings for imports
+remappings = [
+    "@forge-std/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
+]
+
+# RPC endpoints
+[rpc_endpoints]
+localhost = "http://127.0.0.1:8545"
+base_sepolia = "https://sepolia.base.org"
+ethereum_sepolia = "https://ethereum-sepolia-rpc.publicnode.com"
+
+# Etherscan API keys for contract verification
+[etherscan]
+base_sepolia = { key = "${BASESCAN_API_KEY}", url = "https://api-sepolia.basescan.org/api" }
+ethereum_sepolia = { key = "${ETHERSCAN_API_KEY}", url = "https://api-sepolia.etherscan.io/api" }

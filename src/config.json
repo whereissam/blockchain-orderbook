@@ -14,6 +14,21 @@
     },
     "explorerURL": "#"
   },
+  "84532": {
+    "exchange": {
+      "address": "0x43d827e34D3e98F987075a469C513f8b8bA28a26"
+    },
+    "SSS": {
+      "address": "0x4cC9e56C00a7b94424D94231bF5B603a32a0BF6D"
+    },
+    "mETH": {
+      "address": "0xe6f9D40767Db3D90ac878228ABf407C675de1ba5"
+    },
+    "mDAI": {
+      "address": "0xAD2A615a5121A79124e9704C259e7772721386a7"
+    },
+    "explorerURL": "https://sepolia.basescan.org/"
+  },
   "11155111": {
     "exchange": {
       "address": "0x16fA4D189783cc14Cc76F4ff954641040F987aB9"

@@ -6,7 +6,7 @@ const useExchangeStore = create(
   subscribeWithSelector(
     immer((set, get) => ({
   loaded: false,
-  contract: {},
+  contract: null,
   balances: [],
   
   transaction: {

@@ -13,15 +13,38 @@ const useTokensStore = create(
 
       // Actions
       loadToken1: (token, symbol) => set((state) => {
-        state.loaded = true
-        state.contracts = [token]
-        state.symbols = [symbol]
+        console.log('🔍 loadToken1 called with:', { 
+          hasToken: !!token, 
+          tokenTarget: token?.target, 
+          symbol,
+          isError: symbol === 'ERROR'
+        })
+        if (token && symbol && symbol !== 'ERROR') {
+          state.loaded = true
+          state.contracts = [token]
+          state.symbols = [symbol]
+          console.log('✅ Token1 stored in state')
+        } else {
+          console.log('❌ Token1 not stored - failed validation')
+        }
       }),
       
       loadToken2: (token, symbol) => set((state) => {
-        state.loaded = true
-        state.contracts.push(token)
-        state.symbols.push(symbol)
+        console.log('🔍 loadToken2 called with:', { 
+          hasToken: !!token, 
+          tokenTarget: token?.target, 
+          symbol,
+          isError: symbol === 'ERROR',
+          currentContractsLength: state.contracts.length
+        })
+        if (token && symbol && symbol !== 'ERROR') {
+          state.loaded = true
+          state.contracts.push(token)
+          state.symbols.push(symbol)
+          console.log('✅ Token2 stored in state, total contracts:', state.contracts.length)
+        } else {
+          console.log('❌ Token2 not stored - failed validation')
+        }
       }),
       
       loadToken1Balance: (balance) => set((state) => {

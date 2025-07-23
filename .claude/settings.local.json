@@ -1,7 +1,26 @@
 {
   "permissions": {
     "allow": [
-      "Bash(forge init:*)"
+      "Bash(forge init:*)",
+      "Bash(git checkout:*)",
+      "Bash(rm:*)",
+      "Bash(forge build:*)",
+      "Bash(mkdir:*)",
+      "Bash(forge script:*)",
+      "Bash(forge test:*)",
+      "Bash(ls:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx hardhat:*)",
+      "Bash(grep:*)",
+      "Bash(nvm use:*)",
+      "Bash(node:*)",
+      "Bash(source:*)",
+      "Bash(bun run:*)",
+      "Bash(npm run build:*)",
+      "Bash(find:*)",
+      "Bash(npm run seed:base-sepolia:*)",
+      "Bash(NODE_OPTIONS=\"--openssl-legacy-provider\" npm run dev)"
     ],
     "deny": []
   }

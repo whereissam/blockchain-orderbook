@@ -1,0 +1,276 @@
+/* Enhanced Color System - Applies new colors from App.css */
+
+/* Status and UI States */
+.status-connected {
+  color: var(--clr-green);
+  background: rgba(37, 206, 143, 0.1);
+}
+
+.status-warning {
+  color: var(--clr-orange);
+  background: rgba(255, 149, 0, 0.1);
+}
+
+.status-loading {
+  color: var(--clr-yellow);
+  background: rgba(255, 204, 0, 0.1);
+}
+
+.status-error {
+  color: var(--clr-red);
+  background: rgba(244, 83, 83, 0.1);
+}
+
+/* Enhanced Button States */
+.button--success {
+  background: var(--clr-green);
+  color: var(--clr-white);
+  border: 1px solid var(--clr-green);
+}
+
+.button--info {
+  background: var(--clr-blue);
+  color: var(--clr-white);
+  border: 1px solid var(--clr-blue);
+}
+
+.button--info:hover {
+  background: rgba(33, 135, 208, 0.8);
+  border: 1px solid var(--clr-blue);
+}
+
+.button--disabled {
+  background: var(--clr-disabled) !important;
+  color: var(--clr-disabled-text) !important;
+  border: 1px solid var(--clr-disabled) !important;
+  cursor: not-allowed !important;
+}
+
+.button--success:hover {
+  background: rgba(37, 206, 143, 0.8);
+  border: 1px solid var(--clr-green);
+}
+
+.button--warning {
+  background: var(--clr-orange);
+  color: var(--clr-white);
+  border: 1px solid var(--clr-orange);
+}
+
+.button--warning:hover {
+  background: rgba(255, 149, 0, 0.8);
+  border: 1px solid var(--clr-orange);
+}
+
+.button--secondary {
+  background: var(--clr-yellow);
+  color: var(--clr-primary);
+  border: 1px solid var(--clr-yellow);
+}
+
+.button--secondary:hover {
+  background: rgba(255, 204, 0, 0.8);
+  border: 1px solid var(--clr-yellow);
+}
+
+/* Enhanced Text Colors */
+.text-success {
+  color: var(--clr-green);
+}
+
+.text-warning {
+  color: var(--clr-orange);
+}
+
+.text-error {
+  color: var(--clr-red);
+}
+
+.text-info {
+  color: var(--clr-blue);
+}
+
+.text-secondary {
+  color: var(--clr-yellow);
+}
+
+/* Enhanced Order Book Colors */
+.order-buy {
+  color: var(--clr-green);
+}
+
+.order-sell {
+  color: var(--clr-red);
+}
+
+.order-neutral {
+  color: var(--clr-neutral);
+}
+
+/* Enhanced Connection Status */
+.connection-status.connected {
+  border-color: var(--clr-green);
+  background: rgba(37, 206, 143, 0.05);
+}
+
+.connection-status.warning {
+  border-color: var(--clr-orange);
+  background: rgba(255, 149, 0, 0.05);
+}
+
+.connection-status.error {
+  border-color: var(--clr-red);
+  background: rgba(244, 83, 83, 0.05);
+}
+
+/* Enhanced Input States */
+.input-success {
+  border-color: var(--clr-green);
+  background: rgba(37, 206, 143, 0.05);
+}
+
+.input-warning {
+  border-color: var(--clr-orange);
+  background: rgba(255, 149, 0, 0.05);
+}
+
+.input-error {
+  border-color: var(--clr-red);
+  background: rgba(244, 83, 83, 0.05);
+}
+
+/* Enhanced Tab States */
+.tab--success {
+  background: var(--clr-green);
+  color: var(--clr-white);
+}
+
+.tab--warning {
+  background: var(--clr-orange);
+  color: var(--clr-white);
+}
+
+.tab--secondary {
+  background: var(--clr-yellow);
+  color: var(--clr-primary);
+}
+
+/* Enhanced Table Styles */
+.table-row-positive {
+  background: rgba(37, 206, 143, 0.1);
+  border-left: 3px solid var(--clr-green);
+}
+
+.table-row-negative {
+  background: rgba(244, 83, 83, 0.1);
+  border-left: 3px solid var(--clr-red);
+}
+
+.table-row-neutral {
+  background: rgba(255, 149, 0, 0.1);
+  border-left: 3px solid var(--clr-orange);
+}
+
+/* Enhanced Price Changes */
+.price-up {
+  color: var(--clr-green);
+}
+
+.price-down {
+  color: var(--clr-red);
+}
+
+.price-neutral {
+  color: var(--clr-neutral);
+}
+
+/* Utility Classes */
+.bg-success-soft {
+  background: rgba(37, 206, 143, 0.1);
+}
+
+.bg-warning-soft {
+  background: rgba(255, 149, 0, 0.1);
+}
+
+.bg-error-soft {
+  background: rgba(244, 83, 83, 0.1);
+}
+
+.bg-info-soft {
+  background: rgba(33, 135, 208, 0.1);
+}
+
+.bg-secondary-soft {
+  background: rgba(255, 204, 0, 0.1);
+}
+
+/* Border Utilities */
+.border-success {
+  border-color: var(--clr-green);
+}
+
+.border-warning {
+  border-color: var(--clr-orange);
+}
+
+.border-error {
+  border-color: var(--clr-red);
+}
+
+.border-info {
+  border-color: var(--clr-blue);
+}
+
+.border-secondary {
+  border-color: var(--clr-yellow);
+}
+
+/* Trading Specific Colors */
+.trading-profit {
+  color: var(--clr-green);
+  background: rgba(37, 206, 143, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.trading-loss {
+  color: var(--clr-red);
+  background: rgba(244, 83, 83, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.trading-pending {
+  color: var(--clr-yellow);
+  background: rgba(255, 204, 0, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Enhanced Focus States */
+input:focus,
+button:focus,
+.tab:focus {
+  outline: 2px solid var(--clr-blue);
+  outline-offset: 2px;
+}
+
+/* Enhanced Hover States */
+.hover-success:hover {
+  background: rgba(37, 206, 143, 0.1);
+  color: var(--clr-green);
+  transition: all 0.2s ease;
+}
+
+.hover-warning:hover {
+  background: rgba(255, 149, 0, 0.1);
+  color: var(--clr-orange);
+  transition: all 0.2s ease;
+}
+
+.hover-error:hover {
+  background: rgba(244, 83, 83, 0.1);
+  color: var(--clr-red);
+  transition: all 0.2s ease;
+}

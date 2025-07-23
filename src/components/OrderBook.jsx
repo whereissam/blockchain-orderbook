@@ -26,62 +26,63 @@ const OrderBook = () => {
         <h2>Order Book</h2>
       </div>
 
-      <div className="flex">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden">
 
-        {!orderBook || orderBook.sellOrders.length === 0 ? (
-          <p className='flex-center'>No Sell Orders</p>
-        ) : (
-          <table className='exchange__orderbook--sell'>
-            <caption>Selling</caption>
-            <thead>
-              <tr>
-                <th>{symbols && symbols[0]}<img src={sort} alt="Sort" /></th>
-                <th>{symbols && symbols[0]}/{symbols && symbols[1]}<img src={sort} alt="Sort" /></th>
-                <th>{symbols && symbols[1]}<img src={sort} alt="Sort" /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderBook && orderBook.sellOrders.map((order, index) => {
-                return (
-                  <tr key={index} onClick={() => fillOrderedHandler(order)}>
-                    <td>{((order.token0Amount) * 1).toFixed(1)}</td>
-                    <td style={{ color: `${order.orderTypeClass}` }}>{order.tokenPrice}</td>
-                    <td>{((order.token1Amount) * 1).toFixed(1)}</td>
-                  </tr>
-                )
-              })}
+        <div className="overflow-x-auto">
+          {!orderBook || orderBook.sellOrders.length === 0 ? (
+            <p className='flex-center min-h-[100px]'>No Sell Orders</p>
+          ) : (
+            <table className='exchange__orderbook--sell w-full min-w-[250px]'>
+              <caption className="text-left font-semibold mb-2">Selling</caption>
+              <thead>
+                <tr>
+                  <th className="text-left p-2 border-b">{symbols && symbols[0]}<img src={sort} alt="Sort" className="inline ml-1 w-3 h-3" /></th>
+                  <th className="text-left p-2 border-b">{symbols && symbols[0]}/{symbols && symbols[1]}<img src={sort} alt="Sort" className="inline ml-1 w-3 h-3" /></th>
+                  <th className="text-left p-2 border-b">{symbols && symbols[1]}<img src={sort} alt="Sort" className="inline ml-1 w-3 h-3" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderBook && orderBook.sellOrders.map((order, index) => {
+                  return (
+                    <tr key={index} onClick={() => fillOrderedHandler(order)} className="hover:bg-accent/50 cursor-pointer">
+                      <td className="p-2 border-b text-sm">{((order.token0Amount) * 1).toFixed(1)}</td>
+                      <td className={`p-2 border-b text-sm ${order.orderTypeClass}`}>{order.tokenPrice}</td>
+                      <td className="p-2 border-b text-sm">{((order.token1Amount) * 1).toFixed(1)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
 
-            </tbody>
-          </table>
-        )}
-
-
-        <div className='divider'></div>
-        {!orderBook || orderBook.buyOrders.length === 0 ? (
-          <p className='flex-center'>No buy Orders</p>
-        ) : (
-          <table className='exchange__orderbook--buy'>
-            <caption>Buying</caption>
-            <thead>
-              <tr>
-                <th>{symbols && symbols[0]}<img src={sort} alt="Sort" /></th>
-                <th>{symbols && symbols[0]}/{symbols && symbols[1]}<img src={sort} alt="Sort" /></th>
-                <th>{symbols && symbols[1]}<img src={sort} alt="Sort" /></th>
-              </tr>
-            </thead>
-            <tbody>
-              {orderBook && orderBook.buyOrders.map((order, index) => {
-                return (
-                  <tr key={index} onClick={() => fillOrderedHandler(order)}>
-                    <td>{((order.token1Amount) * 1).toFixed(1)}</td>
-                    <td style={{ color: `${order.orderTypeClass}` }}>{order.tokenPrice}</td>
-                    <td>{((order.token0Amount) * 1).toFixed(1)}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        )}
+        <div className="overflow-x-auto">
+          {!orderBook || orderBook.buyOrders.length === 0 ? (
+            <p className='flex-center min-h-[100px]'>No Buy Orders</p>
+          ) : (
+            <table className='exchange__orderbook--buy w-full min-w-[250px]'>
+              <caption className="text-left font-semibold mb-2">Buying</caption>
+              <thead>
+                <tr>
+                  <th className="text-left p-2 border-b">{symbols && symbols[0]}<img src={sort} alt="Sort" className="inline ml-1 w-3 h-3" /></th>
+                  <th className="text-left p-2 border-b">{symbols && symbols[0]}/{symbols && symbols[1]}<img src={sort} alt="Sort" className="inline ml-1 w-3 h-3" /></th>
+                  <th className="text-left p-2 border-b">{symbols && symbols[1]}<img src={sort} alt="Sort" className="inline ml-1 w-3 h-3" /></th>
+                </tr>
+              </thead>
+              <tbody>
+                {orderBook && orderBook.buyOrders.map((order, index) => {
+                  return (
+                    <tr key={index} onClick={() => fillOrderedHandler(order)} className="hover:bg-accent/50 cursor-pointer">
+                      <td className="p-2 border-b text-sm">{((order.token1Amount) * 1).toFixed(1)}</td>
+                      <td className={`p-2 border-b text-sm ${order.orderTypeClass}`}>{order.tokenPrice}</td>
+                      <td className="p-2 border-b text-sm">{((order.token0Amount) * 1).toFixed(1)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   )

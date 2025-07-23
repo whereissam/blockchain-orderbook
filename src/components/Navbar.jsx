@@ -2,9 +2,12 @@ import { useState } from 'react'
 import Blockies from 'react-blockies'
 import { loadProvider, loadAccount } from '../store/interactions'
 import useProviderStore from '../store/providerStore'
+import { Button } from '../components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
 import config from '../config.json'
 import logo from '../assets/logo.png'
 import eth from '../assets/eth.svg'
+import '../App.css'
 
 const Navbar = () => {
   const provider = useProviderStore(state => state.connection)
@@ -13,8 +16,6 @@ const Navbar = () => {
   const balance = useProviderStore(state => state.balance)
   const disconnectProvider = useProviderStore(state => state.disconnectProvider)
   
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [showNetworkDropdown, setShowNetworkDropdown] = useState(false)
 
   const connectHandler = async () => {
     try {
@@ -62,7 +63,6 @@ const Navbar = () => {
         params: [{ chainId }],
       })
       console.log('Network switch successful')
-      setShowNetworkDropdown(false)
     } catch (error) {
       console.error('Failed to switch network:', error)
       if (window.showToast) {
@@ -75,6 +75,7 @@ const Navbar = () => {
     switch (chainId) {
       case 31337: return 'Localhost'
       case 11155111: return 'Sepolia'
+      case 84532: return 'Base Sepolia'
       default: return 'Unknown'
     }
   }
@@ -89,27 +90,24 @@ const Navbar = () => {
         <img src={eth} alt="ETH Logo" className='Eth Logo' />
 
         {chainId && (
-          <div className="network-dropdown">
-            <div className="network-button" onClick={() => setShowNetworkDropdown(!showNetworkDropdown)}>
-              {getNetworkName(chainId)}
-            </div>
-            {showNetworkDropdown && (
-              <div className="network-menu">
-                <button onClick={() => {
-                  console.log('Localhost button clicked')
-                  networkHandler('0x7A69')
-                }}>
-                  Localhost
-                </button>
-                <button onClick={() => {
-                  console.log('Sepolia button clicked')
-                  networkHandler('0xAA36A7')
-                }}>
-                  Sepolia
-                </button>
-              </div>
-            )}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="bg-secondary border-border">
+                {getNetworkName(chainId)}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => networkHandler('0x7A69')}>
+                Localhost
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => networkHandler('0xAA36A7')}>
+                Sepolia
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => networkHandler('0x14a34')}>
+                Base Sepolia
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
 
       </div>
@@ -120,40 +118,43 @@ const Navbar = () => {
           <p><small>My Balance</small>0 ETH</p>
         )}
         {account ? (
-          <div className="wallet-dropdown">
-            <div className="wallet-button" onClick={() => setShowDropdown(!showDropdown)}>
-              {account.slice(0, 5) + '...' + account.slice(38, 42)}
-              <Blockies
-                seed={account}
-                size={10}
-                scale={3}
-                color="#2187D0"
-                bgColor="#F1F2F9"
-                spotColor="#767F92"
-                className="identicon"
-              />
-            </div>
-            {showDropdown && (
-              <div className="wallet-menu">
-                <button onClick={() => { copyAddressHandler(); setShowDropdown(false); }}>
-                  Copy Address
-                </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" className="flex items-center gap-3 h-12">
+                {account.slice(0, 5) + '...' + account.slice(38, 42)}
+                <Blockies
+                  seed={account}
+                  size={10}
+                  scale={3}
+                  color="#60a5fa"
+                  bgColor="#1e293b"
+                  spotColor="#94a3b8"
+                  className="identicon rounded-full"
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => copyAddressHandler()}>
+                Copy Address
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <a 
                   href={config[chainId] ? `${config[chainId].explorerURL}/address/${account}` : `#`}
                   target='_blank'
                   rel='noreferrer'
-                  onClick={() => setShowDropdown(false)}
+                  className="w-full"
                 >
                   View on Explorer
                 </a>
-                <button onClick={() => { disconnectHandler(); setShowDropdown(false); }} className="disconnect">
-                  Disconnect
-                </button>
-              </div>
-            )}
-          </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={disconnectHandler} className="text-destructive focus:text-destructive">
+                Disconnect
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
-          <button className="button" onClick={connectHandler}>Connect</button>
+          <Button onClick={connectHandler}>Connect</Button>
         )}
       </div>
     </div>

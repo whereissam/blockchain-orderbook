@@ -19,15 +19,20 @@ const Transactions = () => {
   const tradeRef = useRef(null)
   const orderRef = useRef(null)
 
+  // Fixed tab handler - the issue was inefficient DOM manipulation
   const tabHandler = (e) => {
-    if (e.target.className !== orderRef.current.className) {
-      e.target.className = 'tab tab--active'
-      orderRef.current.className = 'tab'
-      setShowMyOrders(false)
-    } else {
-      e.target.className = 'tab tab--active'
+    const isOrdersTab = e.target === orderRef.current
+    
+    if (isOrdersTab) {
+      // Switching to Orders tab
+      orderRef.current.className = 'tab tab--active'
       tradeRef.current.className = 'tab'
       setShowMyOrders(true)
+    } else {
+      // Switching to Trades tab  
+      tradeRef.current.className = 'tab tab--active'
+      orderRef.current.className = 'tab'
+      setShowMyOrders(false)
     }
   }
 
@@ -64,7 +69,7 @@ const Transactions = () => {
                 {myOpenOrders && myOpenOrders.map((order, index) => {
                   return (
                     <tr key={index}>
-                      <td style={{ color: `${order.orderTypeClass}` }}>{order.token0Amount}</td>
+                      <td className={order.orderTypeClass}>{order.token0Amount}</td>
                       <td>{order.tokenPrice}</td>
                       <td><button className='button--sm'
                         onClick={() => cancelHandler(order)}>Cancel</button></td>
@@ -82,8 +87,8 @@ const Transactions = () => {
             <h2>My Transactions</h2>
 
             <div className='tabs'>
-              <button onClick={tabHandler} ref={orderRef} className='tab tab--active'>Orders</button>
-              <button onClick={tabHandler} ref={tradeRef} className='tab'>Trades</button>
+              <button onClick={tabHandler} ref={orderRef} className='tab'>Orders</button>
+              <button onClick={tabHandler} ref={tradeRef} className='tab tab--active'>Trades</button>
             </div>
           </div>
 
@@ -101,7 +106,7 @@ const Transactions = () => {
                 return (
                   <tr key={index}>
                     <td>{order.formattedTimestamp}</td>
-                    <td style={{ color: `${order.orderTypeClass}` }}>{order.orderSign}{order.token0Amount}</td>
+                    <td className={order.orderTypeClass}>{order.orderSign}{order.token0Amount}</td>
                     <td>{order.tokenPrice}</td>
                   </tr>
                 )

@@ -5,11 +5,23 @@ import useProviderStore from './providerStore'
 import useTokensStore from './tokensStore'
 import useExchangeStore from './exchangeStore'
 
+// Using CSS classes instead of hex colors for better theming
+const BUY_CLASS = 'order-buy'
+const SELL_CLASS = 'order-sell'
+const PRICE_UP_CLASS = 'price-up'
+const PRICE_DOWN_CLASS = 'price-down'
+
+// Legacy color constants (still used in some places)
 const GREEN = '#25CE8F'
 const RED = '#F45353'
 
 // Helper functions for calculations
 const decorateOrder = (order, tokens) => {
+  if (!order || !tokens || tokens.length < 2 || !tokens[0] || !tokens[1]) {
+    console.warn('decorateOrder: Invalid order or tokens data')
+    return null
+  }
+
   let token0Amount, token1Amount
 
   // SSS should be considered token0, mETH is considered token1
@@ -31,7 +43,7 @@ const decorateOrder = (order, tokens) => {
     token0Amount: ethers.formatUnits(token0Amount, "ether"),
     token1Amount: ethers.formatUnits(token1Amount, 'ether'),
     tokenPrice,
-    formattedTimestamp: moment.unix(order.timestamp).format('h:mm:ssa d MMM D')
+    formattedTimestamp: order.timestamp ? moment.unix(order.timestamp).format('h:mm:ssa d MMM D') : 'Invalid Date'
   })
 }
 
@@ -44,7 +56,7 @@ export const useMyEventsSelector = () => {
   
   if (!account || !events) return []
   
-  return events.filter((e) => e.args.user === account)
+  return events.filter((e) => e && e.args && e.args.user === account)
 }
 
 // For backward compatibility
@@ -54,7 +66,7 @@ export const myEventsSelector = () => {
   
   if (!account || !events) return []
   
-  return events.filter((e) => e.args.user === account)
+  return events.filter((e) => e && e.args && e.args.user === account)
 }
 
 //--------------------------------------------------------------------------------------------
@@ -86,13 +98,14 @@ export const useMyOpenOrdersSelector = () => {
   //Decorate orders - add display attributes
   filteredOrders = filteredOrders.map((order) => {
     order = decorateOrder(order, tokens)
+    if (!order) return null
     const orderType = order.tokenGive === tokens[1].address ? 'buy' : 'sell'
     return {
       ...order,
       orderType,
-      orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+      orderTypeClass: (orderType === 'buy' ? BUY_CLASS : SELL_CLASS),
     }
-  })
+  }).filter(order => order !== null)
 
   //Sort orders by date descending
   filteredOrders = filteredOrders.sort((a, b) => b.timestamp - a.timestamp)
@@ -127,13 +140,14 @@ export const myOpenOrdersSelector = () => {
   //Decorate orders - add display attributes
   filteredOrders = filteredOrders.map((order) => {
     order = decorateOrder(order, tokens)
+    if (!order) return null
     const orderType = order.tokenGive === tokens[1].address ? 'buy' : 'sell'
     return {
       ...order,
       orderType,
-      orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+      orderTypeClass: (orderType === 'buy' ? BUY_CLASS : SELL_CLASS),
     }
-  })
+  }).filter(order => order !== null)
 
   //Sort orders by date descending
   filteredOrders = filteredOrders.sort((a, b) => b.timestamp - a.timestamp)
@@ -163,8 +177,8 @@ export const useFilledOrdersSelector = () => {
     order = decorateOrder(order, tokens)
     
     const tokenPriceClass = previousOrder?.id === order.id 
-      ? GREEN 
-      : (previousOrder?.tokenPrice <= order.tokenPrice ? GREEN : RED)
+      ? PRICE_UP_CLASS 
+      : (previousOrder?.tokenPrice <= order.tokenPrice ? PRICE_UP_CLASS : PRICE_DOWN_CLASS)
     
     order = {
       ...order,
@@ -200,8 +214,8 @@ export const filledOrdersSelector = () => {
     order = decorateOrder(order, tokens)
     
     const tokenPriceClass = previousOrder?.id === order.id 
-      ? GREEN 
-      : (previousOrder?.tokenPrice <= order.tokenPrice ? GREEN : RED)
+      ? PRICE_UP_CLASS 
+      : (previousOrder?.tokenPrice <= order.tokenPrice ? PRICE_UP_CLASS : PRICE_DOWN_CLASS)
     
     order = {
       ...order,
@@ -248,7 +262,7 @@ export const useMyFilledOrdersSelector = () => {
     return {
       ...order,
       orderType,
-      orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+      orderTypeClass: (orderType === 'buy' ? BUY_CLASS : SELL_CLASS),
       orderSign: (orderType === 'buy' ? '+' : '-')
     }
   })
@@ -285,7 +299,7 @@ export const myFilledOrdersSelector = () => {
     return {
       ...order,
       orderType,
-      orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+      orderTypeClass: (orderType === 'buy' ? BUY_CLASS : SELL_CLASS),
       orderSign: (orderType === 'buy' ? '+' : '-')
     }
   })
@@ -322,7 +336,7 @@ export const useOrderBookSelector = () => {
     return {
       ...order,
       orderType,
-      orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+      orderTypeClass: (orderType === 'buy' ? BUY_CLASS : SELL_CLASS),
       orderFillAction: (orderType === 'buy' ? 'sell' : 'buy')
     }
   })
@@ -375,7 +389,7 @@ export const orderBookSelector = () => {
     return {
       ...order,
       orderType,
-      orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+      orderTypeClass: (orderType === 'buy' ? BUY_CLASS : SELL_CLASS),
       orderFillAction: (orderType === 'buy' ? 'sell' : 'buy')
     }
   })
@@ -418,7 +432,7 @@ export const usePriceChartSelector = () => {
   filteredOrders = filteredOrders.sort((a, b) => a.timestamp - b.timestamp)
 
   //Decorate orders - add display attributes
-  filteredOrders = filteredOrders.map((o) => decorateOrder(o, tokens))
+  filteredOrders = filteredOrders.map((o) => decorateOrder(o, tokens)).filter(o => o !== null)
 
   // Get last 2 order for final price & price change
   let secondLastOrder, lastOrder
@@ -474,7 +488,7 @@ export const priceChartSelector = () => {
   filteredOrders = filteredOrders.sort((a, b) => a.timestamp - b.timestamp)
 
   //Decorate orders - add display attributes
-  filteredOrders = filteredOrders.map((o) => decorateOrder(o, tokens))
+  filteredOrders = filteredOrders.map((o) => decorateOrder(o, tokens)).filter(o => o !== null)
 
   // Get last 2 order for final price & price change
   let secondLastOrder, lastOrder
