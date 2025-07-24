@@ -89,11 +89,11 @@ export const useMyOpenOrdersSelector = () => {
   })
 
   //Filter orders created by current account
-  let filteredOrders = openOrders.filter((o) => o.user === account)
+  let filteredOrders = openOrders.filter((o) => o && o.user === account)
 
   //Filter order by selected tokens
-  filteredOrders = filteredOrders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Decorate orders - add display attributes
   filteredOrders = filteredOrders.map((order) => {
@@ -131,11 +131,11 @@ export const myOpenOrdersSelector = () => {
   })
 
   //Filter orders created by current account
-  let filteredOrders = openOrders.filter((o) => o.user === account)
+  let filteredOrders = openOrders.filter((o) => o && o.user === account)
 
   //Filter order by selected tokens
-  filteredOrders = filteredOrders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Decorate orders - add display attributes
   filteredOrders = filteredOrders.map((order) => {
@@ -165,8 +165,8 @@ export const useFilledOrdersSelector = () => {
   if (!tokens || tokens.length < 2 || !orders || orders.length === 0) return []
 
   //Filter order by selected tokens
-  let filteredOrders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  let filteredOrders = orders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Sort orders by date ascending for price comparison
   filteredOrders = filteredOrders.sort((a, b) => a.timestamp - b.timestamp)
@@ -202,8 +202,8 @@ export const filledOrdersSelector = () => {
   if (!tokens || tokens.length < 2 || !orders) return []
 
   //Filter order by selected tokens
-  let filteredOrders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  let filteredOrders = orders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Sort orders by date ascending for price comparison
   filteredOrders = filteredOrders.sort((a, b) => a.timestamp - b.timestamp)
@@ -242,10 +242,10 @@ export const useMyFilledOrdersSelector = () => {
   if (!tokens || tokens.length < 2 || !account || !orders || orders.length === 0) return []
 
   //Find our orders
-  let filteredOrders = orders.filter((o) => o.user === account || o.creator === account)
+  let filteredOrders = orders.filter((o) => o && (o.user === account || o.creator === account))
   //Filter orders for current trading pair
-  filteredOrders = filteredOrders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Sort by date descending
   filteredOrders = filteredOrders.sort((a, b) => b.timestamp - a.timestamp)
@@ -279,10 +279,10 @@ export const myFilledOrdersSelector = () => {
   if (!tokens || tokens.length < 2 || !account || !orders) return []
 
   //Find our orders
-  let filteredOrders = orders.filter((o) => o.user === account || o.creator === account)
+  let filteredOrders = orders.filter((o) => o && (o.user === account || o.creator === account))
   //Filter orders for current trading pair
-  filteredOrders = filteredOrders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Sort by date descending
   filteredOrders = filteredOrders.sort((a, b) => b.timestamp - a.timestamp)
@@ -326,8 +326,8 @@ export const useOrderBookSelector = () => {
   })
 
   //Filter order by selected tokens
-  let filteredOrders = openOrders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  let filteredOrders = openOrders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Decorate orders
   filteredOrders = filteredOrders.map((order) => {
@@ -379,8 +379,8 @@ export const orderBookSelector = () => {
   })
 
   //Filter order by selected tokens
-  let filteredOrders = openOrders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  let filteredOrders = openOrders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Decorate orders
   filteredOrders = filteredOrders.map((order) => {
@@ -425,8 +425,8 @@ export const usePriceChartSelector = () => {
   if (!tokens || tokens.length < 2 || !orders || orders.length === 0) return {}
 
   //Filter orders by selected tokens
-  let filteredOrders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  let filteredOrders = orders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Sort orders by date ascending to compare history
   filteredOrders = filteredOrders.sort((a, b) => a.timestamp - b.timestamp)
@@ -481,8 +481,8 @@ export const priceChartSelector = () => {
   if (!tokens || tokens.length < 2 || !orders) return {}
 
   //Filter orders by selected tokens
-  let filteredOrders = orders.filter((o) => o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address)
-  filteredOrders = filteredOrders.filter((o) => o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address)
+  let filteredOrders = orders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
 
   //Sort orders by date ascending to compare history
   filteredOrders = filteredOrders.sort((a, b) => a.timestamp - b.timestamp)

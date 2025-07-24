@@ -57,7 +57,7 @@ const PriceChart = () => {
 
       {!account ? (
         <Banner text={'Please connect to metamask'} />
-      ) : filledOrders?.data?.length === 0 ? (
+      ) : !filledOrders?.loaded || filledOrders?.data?.length === 0 ? (
         <div className="text-center p-8">
           <Banner text={'No trades yet. Create and fill orders to see price chart!'} />
           <div className="mt-4 text-sm text-muted-foreground">

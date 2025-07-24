@@ -19,10 +19,12 @@ const useExchangeStore = create(
   },
   
   cancelledOrders: {
+    loaded: false,
     data: []
   },
   
   filledOrders: {
+    loaded: false,
     data: []
   },
   
@@ -106,6 +108,9 @@ const useExchangeStore = create(
     if (index === -1) {
       state.filledOrders.data.push(order)
     }
+
+    // Set loaded flag to ensure chart updates
+    state.filledOrders.loaded = true
 
     state.transaction = {
       transactionType: 'Fill Order',

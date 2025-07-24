@@ -20,7 +20,8 @@
       "Bash(npm run build:*)",
       "Bash(find:*)",
       "Bash(npm run seed:base-sepolia:*)",
-      "Bash(NODE_OPTIONS=\"--openssl-legacy-provider\" npm run dev)"
+      "Bash(NODE_OPTIONS=\"--openssl-legacy-provider\" npm run dev)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

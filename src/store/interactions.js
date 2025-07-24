@@ -309,7 +309,7 @@ export const loadAllOrders = async (provider, exchange) => {
     const block = await provider.getBlockNumber()
     
     // Limit to recent blocks to avoid rate limiting - much smaller range
-    const fromBlock = Math.max(0, block - 50) // Last ~50 blocks only (reduced for rate limiting)
+    const fromBlock = Math.max(0, block - 1000) // Last ~1000 blocks (increased for better chart data)
     
     console.log(`Loading orders from block ${fromBlock} to ${block}`)
 
@@ -636,9 +636,17 @@ export const fetchHistoricalTrades = async (exchangeAddress, fromBlock = 0) => {
     const data = await response.json()
     
     console.log('📊 BaseScan API response:', { status: data.status, message: data.message, resultCount: data.result?.length })
+    console.log('📊 Full API response:', data)
     
     if (data.status !== '1') {
-      console.log('📊 No historical trades found or API error:', data.message)
+      console.log('📊 BaseScan API error:', data.message)
+      console.log('📊 Falling back to direct blockchain query...')
+      return []
+    }
+    
+    // Ensure we have valid results to process
+    if (!data.result || !Array.isArray(data.result)) {
+      console.log('📊 No valid results to process')
       return []
     }
     
@@ -649,12 +657,15 @@ export const fetchHistoricalTrades = async (exchangeAddress, fromBlock = 0) => {
     
     for (const log of data.result) {
       try {
+        console.log('📊 Processing log:', log)
         // Use ethers to properly decode the event
         const iface = new ethers.Interface(EXCHANGE_ABI)
         const decodedLog = iface.parseLog({
           topics: log.topics,
           data: log.data
         })
+        
+        console.log('📊 Decoded log:', decodedLog)
         
         if (decodedLog && decodedLog.name === 'Trade') {
           const args = decodedLog.args
@@ -676,7 +687,8 @@ export const fetchHistoricalTrades = async (exchangeAddress, fromBlock = 0) => {
       }
     }
     
-    console.log('📊 Successfully parsed', trades.length, 'historical trades')
+    console.log('📊 Successfully parsed', trades.length, 'historical trades from', data.result.length, 'logs')
+    console.log('📊 Parsed trades:', trades)
     return trades
   } catch (error) {
     console.error('❌ Error fetching historical trades:', error)
@@ -695,28 +707,88 @@ export const loadAllOrdersWithHistory = async (provider, exchange) => {
     
     // Then load recent orders from the blockchain (existing logic)
     const block = await provider.getBlockNumber()
-    const fromBlock = Math.max(0, block - 50) // Reduced from 100 to 50 blocks
     
-    console.log(`Loading recent orders from block ${fromBlock} to ${block}`)
-
-    // Load recent events with increased delays to avoid rate limiting
-    const cancelStream = await exchange.queryFilter('Cancel', fromBlock, block)
-    const cancelledOrders = cancelStream.map(event => event.args)
-    exchangeStore.loadCancelledOrders(cancelledOrders)
+    // Use smaller chunks to avoid RPC limits and rate limiting
+    const maxBlockRange = 500  // Reduced from 1000 to be more conservative
+    const targetBlocksBack = 2000 // Reduced from 10,000 to avoid rate limits
+    const startBlock = Math.max(0, block - targetBlocksBack)
     
-    await new Promise(resolve => setTimeout(resolve, 500)) // Increased delay
-
-    const tradeStream = await exchange.queryFilter('Trade', fromBlock, block)
-    const filledOrders = tradeStream.map(event => event.args)
+    console.log(`📊 Loading orders in chunks from block ${startBlock} to ${block}`)
     
-    // Combine historical and recent trades
-    console.log('📊 Recent trades:', filledOrders.length)
-    exchangeStore.loadFilledOrders(filledOrders)
+    let allCancelledOrders = []
+    let allFilledOrders = []
     
-    await new Promise(resolve => setTimeout(resolve, 500)) // Increased delay
-
-    const orderStream = await exchange.queryFilter('Order', fromBlock, block)
-    const allOrders = orderStream.map(event => event.args)
+    // Query in chunks of 1000 blocks
+    for (let fromBlock = startBlock; fromBlock < block; fromBlock += maxBlockRange) {
+      const toBlock = Math.min(fromBlock + maxBlockRange - 1, block)
+      
+      try {
+        console.log(`📊 Querying chunk: blocks ${fromBlock} to ${toBlock}`)
+        
+        // Load cancelled orders for this chunk
+        const cancelStream = await exchange.queryFilter('Cancel', fromBlock, toBlock)
+        const cancelledOrders = cancelStream.map(event => event.args)
+        allCancelledOrders.push(...cancelledOrders)
+        
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Increased delay to prevent rate limiting
+        
+        // Load filled orders for this chunk
+        const tradeStream = await exchange.queryFilter('Trade', fromBlock, toBlock)
+        const filledOrders = tradeStream.map(event => event.args)
+        allFilledOrders.push(...filledOrders)
+        
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Increased delay to prevent rate limiting
+        
+      } catch (error) {
+        console.log(`📊 Error querying chunk ${fromBlock}-${toBlock}:`, error.message)
+        
+        // If rate limited, wait longer before continuing
+        if (error.message.includes('rate limit')) {
+          console.log('📊 Rate limited, waiting 5 seconds...')
+          await new Promise(resolve => setTimeout(resolve, 5000))
+        }
+        // Continue with next chunk even if one fails
+      }
+    }
+    
+    // Store all collected orders
+    exchangeStore.loadCancelledOrders(allCancelledOrders)
+    console.log('📊 Total cancelled orders found:', allCancelledOrders.length)
+    
+    // Combine historical and blockchain trades
+    console.log('📊 Blockchain trades found:', allFilledOrders.length)
+    console.log('📊 Historical trades from API:', historicalTrades.length)
+    
+    const combinedTrades = [...historicalTrades, ...allFilledOrders]
+    console.log('📊 Combined trades total:', combinedTrades.length)
+    
+    exchangeStore.loadFilledOrders(combinedTrades)
+    
+    // Load all orders in chunks too
+    let allOrders = []
+    for (let fromBlock = startBlock; fromBlock < block; fromBlock += maxBlockRange) {
+      const toBlock = Math.min(fromBlock + maxBlockRange - 1, block)
+      
+      try {
+        console.log(`📊 Querying orders chunk: blocks ${fromBlock} to ${toBlock}`)
+        const orderStream = await exchange.queryFilter('Order', fromBlock, toBlock)
+        const orders = orderStream.map(event => event.args)
+        allOrders.push(...orders)
+        
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Increased delay to prevent rate limiting
+        
+      } catch (error) {
+        console.log(`📊 Error querying orders chunk ${fromBlock}-${toBlock}:`, error.message)
+        
+        // If rate limited, wait longer before continuing
+        if (error.message.includes('rate limit')) {
+          console.log('📊 Rate limited, waiting 5 seconds...')
+          await new Promise(resolve => setTimeout(resolve, 5000))
+        }
+      }
+    }
+    
+    console.log('📊 Total orders found:', allOrders.length)
     exchangeStore.loadAllOrders(allOrders)
     
     console.log('📊 Orders loaded successfully (with historical data)')
