@@ -91,7 +91,7 @@ const Balance = () => {
     try {
       setIsConnecting(true)
       // Load provider first if it doesn't exist
-      const currentProvider = provider || loadProvider()
+      const currentProvider = provider || await loadProvider()
       // Then load account
       await loadAccount(currentProvider)
     } catch (error) {
@@ -120,7 +120,7 @@ const Balance = () => {
             params: [{
               chainId: '0x7A69',
               chainName: 'Localhost 8545',
-              rpcUrls: ['http://localhost:8545'],
+              rpcUrls: ['http://127.0.0.1:8545'],
               nativeCurrency: {
                 name: 'Ethereum',
                 symbol: 'ETH',
@@ -224,6 +224,22 @@ const Balance = () => {
       }
       return {
         message: 'Ready to trade on Ethereum Sepolia',
+        actionText: '',
+        onAction: null
+      }
+    }
+    
+    // Check if on localhost network (31337)
+    if (chainId === 31337) {
+      if (!hasTokens || !exchange) {
+        return {
+          message: 'Localhost detected. Ensure contracts are deployed.',
+          actionText: 'Refresh',
+          onAction: handleRefresh
+        }
+      }
+      return {
+        message: 'Ready to trade on localhost',
         actionText: '',
         onAction: null
       }
@@ -422,6 +438,29 @@ const Balance = () => {
                 Switch to Base Sepolia (Recommended)
               </Button>
             </div>
+          ) : chainId === 31337 ? (
+            // Localhost network - show localhost setup
+            <div>
+              <p><strong>🏠 Localhost Development Setup</strong></p>
+              <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded p-3 my-3">
+                <p><strong>✅ Connected to Localhost (Chain ID: 31337)</strong></p>
+              </div>
+              <ol className="space-y-1">
+                <li>✅ Network connected successfully</li>
+                <li>✅ Using test account with 10,000 ETH</li>
+                <li>✅ Contracts deployed to local blockchain</li>
+                <li>✅ Test data seeded</li>
+              </ol>
+              <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded">
+                <p><strong>📝 Contract Addresses:</strong></p>
+                <ul className="text-sm mt-2 space-y-1">
+                  <li>SSS Token: <code>0x5FbDB2315678afecb367f032d93F642f64180aa3</code></li>
+                  <li>mETH Token: <code>0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</code></li>
+                  <li>Exchange: <code>0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9</code></li>
+                </ul>
+              </div>
+              <p className="mt-3"><strong>🎉 Ready to trade!</strong> All contracts are loaded and you have test tokens.</p>
+            </div>
           ) : (
             // Other networks - show network selection
             <div>
@@ -484,7 +523,7 @@ const Balance = () => {
             </div>
           </div>
           
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground font-medium">WALLET:</span>
               <p className="font-mono text-lg font-semibold">
@@ -510,10 +549,10 @@ const Balance = () => {
             </div>
             <Button 
               variant="outline" 
-              size="sm" 
+              size="sm"
               onClick={handleClaimSSS}
               disabled={!isConnected || !provider}
-              className="text-xs cursor-pointer hover:bg-accent"
+              className="text-xs cursor-pointer hover:bg-accent w-full sm:w-auto flex-shrink-0"
             >
               🪙 Claim {symbols?.[0] || 'SSS'}
             </Button>
@@ -576,7 +615,7 @@ const Balance = () => {
             </div>
           </div>
           
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="text-muted-foreground font-medium">WALLET:</span>
               <p className="font-mono text-lg font-semibold">
@@ -590,7 +629,7 @@ const Balance = () => {
               size="sm" 
               onClick={handleClaimETH}
               disabled={!isConnected || !provider}
-              className="text-xs cursor-pointer hover:bg-accent"
+              className="text-xs cursor-pointer hover:bg-accent w-full sm:w-auto flex-shrink-0"
             >
               🪙 Claim {symbols?.[1] || 'mETH'}
             </Button>

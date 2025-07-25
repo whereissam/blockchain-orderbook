@@ -35,7 +35,12 @@ const decorateOrder = (order, tokens) => {
 
   //Calculate token price to 5 decimal places
   const precision = 100000
-  let tokenPrice = (token1Amount / token0Amount)
+  
+  // Convert BigInt to numbers for calculation, handling potential BigInt values
+  const token0AmountNum = typeof token0Amount === 'bigint' ? Number(token0Amount) : Number(token0Amount || 0)
+  const token1AmountNum = typeof token1Amount === 'bigint' ? Number(token1Amount) : Number(token1Amount || 0)
+  
+  let tokenPrice = token0AmountNum > 0 ? (token1AmountNum / token0AmountNum) : 0
   tokenPrice = Math.round(tokenPrice * precision) / precision
 
   return ({
@@ -43,7 +48,7 @@ const decorateOrder = (order, tokens) => {
     token0Amount: ethers.formatUnits(token0Amount, "ether"),
     token1Amount: ethers.formatUnits(token1Amount, 'ether'),
     tokenPrice,
-    formattedTimestamp: order.timestamp ? moment.unix(order.timestamp).format('h:mm:ssa d MMM D') : 'Invalid Date'
+    formattedTimestamp: order.timestamp ? moment.unix(Number(order.timestamp)).format('h:mm:ssa d MMM D') : 'Invalid Date'
   })
 }
 
@@ -79,7 +84,35 @@ export const useMyOpenOrdersSelector = () => {
   const filledOrders = useExchangeStore(state => state.filledOrders.data)
   const cancelledOrders = useExchangeStore(state => state.cancelledOrders.data)
 
-  if (!tokens || tokens.length < 2 || !account || !allOrders) return []
+  // Debug logging
+  console.log('🔍 useMyOpenOrdersSelector Debug:', {
+    account,
+    tokensCount: tokens?.length || 0,
+    token0Address: tokens?.[0]?.address || 'undefined',
+    token1Address: tokens?.[1]?.address || 'undefined',
+    allOrdersCount: allOrders?.length || 0,
+    filledOrdersCount: filledOrders?.length || 0,
+    cancelledOrdersCount: cancelledOrders?.length || 0
+  })
+  
+  // Sample some orders to see their token addresses
+  if (allOrders && allOrders.length > 0) {
+    console.log('📊 Sample orders from store:', allOrders.slice(0, 3).map(o => ({
+      id: o.id?.toString(),
+      user: o.user,
+      tokenGet: o.tokenGet,
+      tokenGive: o.tokenGive
+    })))
+  }
+
+  if (!tokens || tokens.length < 2 || !account || !allOrders) {
+    console.log('❌ Missing requirements for orders:', { 
+      hasTokens: tokens?.length >= 2, 
+      hasAccount: !!account, 
+      hasAllOrders: !!allOrders 
+    })
+    return []
+  }
 
   // Calculate open orders
   const openOrders = reject(allOrders, (order) => {
@@ -88,12 +121,22 @@ export const useMyOpenOrdersSelector = () => {
     return (orderFilled || orderCancelled)
   })
 
+  console.log('📊 Open orders (after filtering filled/cancelled):', openOrders.length)
+  
   //Filter orders created by current account
   let filteredOrders = openOrders.filter((o) => o && o.user === account)
+  console.log('📊 Orders by current account:', filteredOrders.length, `(account: ${account})`)
+  
+  if (filteredOrders.length > 0) {
+    console.log('📊 Sample order from current account:', filteredOrders[0])
+  }
 
   //Filter order by selected tokens
   filteredOrders = filteredOrders.filter((o) => o && (o.tokenGet === tokens[0].address || o.tokenGet === tokens[1].address))
+  console.log('📊 Orders after tokenGet filter:', filteredOrders.length)
+  
   filteredOrders = filteredOrders.filter((o) => o && (o.tokenGive === tokens[0].address || o.tokenGive === tokens[1].address))
+  console.log('📊 Orders after tokenGive filter:', filteredOrders.length)
 
   //Decorate orders - add display attributes
   filteredOrders = filteredOrders.map((order) => {

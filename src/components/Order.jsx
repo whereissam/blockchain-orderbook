@@ -39,8 +39,8 @@ const Order = () => {
   }
 
   return (
-    <div className="component exchange__orders bg-card border border-border rounded-lg shadow-sm">
-      <div className="flex justify-between items-center p-6 border-b border-border">
+    <div className="component exchange__orders">
+      <div className="component__header">
         <h2>New Order</h2>
         <Tabs value={isBuy ? 'buy' : 'sell'} onValueChange={handleTabChange}>
           <TabsList>
@@ -52,12 +52,12 @@ const Order = () => {
 
       
       {!isReady && (
-        <div className="flex justify-center items-center w-full py-8 text-muted-foreground">
+        <div className="flex-center w-full py-8 px-4 text-muted-foreground">
           Connect your wallet to place orders
         </div>
       )}
       
-      <form onSubmit={isReady ? (isBuy ? buyHandler : sellHandler) : (e) => e.preventDefault()} className="p-6 space-y-4">
+      <form onSubmit={isReady ? (isBuy ? buyHandler : sellHandler) : (e) => e.preventDefault()} className="p-4 space-y-4">
         <div>
           <label htmlFor="amount" className="block mb-2">
             {isBuy ? 'Buy Amount' : 'Sell Amount'}

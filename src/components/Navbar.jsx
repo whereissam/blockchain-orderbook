@@ -2,6 +2,7 @@ import { useState } from 'react'
 import Blockies from 'react-blockies'
 import { loadProvider, loadAccount } from '../store/interactions'
 import useProviderStore from '../store/providerStore'
+import { useToast } from '../hooks/useToast'
 import { Button } from '../components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
 import config from '../config.json'
@@ -15,28 +16,25 @@ const Navbar = () => {
   const account = useProviderStore(state => state.account)
   const balance = useProviderStore(state => state.balance)
   const disconnectProvider = useProviderStore(state => state.disconnectProvider)
+  const { showToast } = useToast()
   
 
   const connectHandler = async () => {
     try {
       // Load provider first if it doesn't exist
-      const currentProvider = provider || loadProvider()
+      const currentProvider = provider || await loadProvider()
       // Then load account
       await loadAccount(currentProvider)
     } catch (error) {
       console.error('Failed to connect wallet:', error)
-      if (window.showToast) {
-        window.showToast('Failed to connect wallet. Please check MetaMask.', 'error', 4000)
-      }
+      showToast('Failed to connect wallet. Please check MetaMask.', 'error', 4000)
     }
   }
 
   const copyAddressHandler = () => {
     if (account) {
       navigator.clipboard.writeText(account)
-      if (window.showToast) {
-        window.showToast('Address copied to clipboard', 'success', 2000)
-      }
+      showToast('Address copied to clipboard', 'success', 2000)
     }
   }
 
@@ -50,9 +48,7 @@ const Navbar = () => {
     
     if (!window.ethereum) {
       console.error('MetaMask not detected')
-      if (window.showToast) {
-        window.showToast('MetaMask not detected. Please install MetaMask.', 'error', 4000)
-      }
+      showToast('MetaMask not detected. Please install MetaMask.', 'error', 4000)
       return
     }
     
@@ -65,8 +61,50 @@ const Navbar = () => {
       console.log('Network switch successful')
     } catch (error) {
       console.error('Failed to switch network:', error)
-      if (window.showToast) {
-        window.showToast('Failed to switch network. Please try again.', 'error', 4000)
+      
+      // If the network doesn't exist, try to add it
+      if (error.code === 4902) {
+        try {
+          // Network configurations for different chains
+          const networkConfigs = {
+            '0x7A69': { // localhost
+              chainId: '0x7A69',
+              chainName: 'Localhost 8545',
+              rpcUrls: ['http://127.0.0.1:8545'],
+              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 }
+            },
+            '0xAA36A7': { // sepolia
+              chainId: '0xAA36A7',
+              chainName: 'Sepolia',
+              rpcUrls: ['https://rpc.sepolia.org'],
+              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+              blockExplorerUrls: ['https://sepolia.etherscan.io']
+            },
+            '0x14a34': { // base sepolia
+              chainId: '0x14a34',
+              chainName: 'Base Sepolia',
+              rpcUrls: ['https://sepolia.base.org'],
+              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+              blockExplorerUrls: ['https://sepolia-explorer.base.org']
+            }
+          }
+          
+          const networkConfig = networkConfigs[chainId]
+          if (networkConfig) {
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [networkConfig],
+            })
+            showToast('Network added and switched successfully!', 'success', 3000)
+          } else {
+            showToast('Network configuration not found.', 'error', 4000)
+          }
+        } catch (addError) {
+          console.error('Failed to add network:', addError)
+          showToast('Failed to add network. Please add it manually in MetaMask.', 'error', 4000)
+        }
+      } else {
+        showToast('Failed to switch network. Please try again.', 'error', 4000)
       }
     }
   }

@@ -227,7 +227,7 @@ button:disabled,
 }
 
 .component__header {
-  @apply flex justify-between items-center mb-4 pb-2 border-b border-border;
+  @apply flex justify-between items-center mb-4 pb-2 border-b border-border w-full;
 }
 
 .flex-between {
@@ -324,6 +324,29 @@ button:disabled,
   
   .exchange__header--brand h1 {
     @apply text-base;
+  }
+
+  /* Mobile improvements for Balance component */
+  .exchange__transfers,
+  .exchange__orders {
+    @apply p-3;
+  }
+
+  /* Better mobile button spacing */
+  .component form {
+    @apply space-y-3;
+  }
+
+  /* Mobile table improvements */
+  .exchange__orderbook table,
+  .exchange__trades table,
+  .exchange__transactions table {
+    @apply text-sm;
+  }
+
+  /* Mobile responsive flex improvements */
+  .flex-col.sm\\:flex-row {
+    @apply gap-2;
   }
 }
 

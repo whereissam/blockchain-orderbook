@@ -73,4 +73,99 @@ contract TokenTest is Test {
         vm.prank(user1);
         token.transferFrom(owner, user2, amount);
     }
+    
+    function test_RevertWhen_TransferFromInsufficientBalance() public {
+        uint256 amount = 2000000 * 10**18;
+        
+        // Approve more than balance
+        token.approve(user1, amount);
+        
+        vm.expectRevert();
+        vm.prank(user1);
+        token.transferFrom(owner, user2, amount);
+    }
+    
+    function test_TransferToZeroAddress() public {
+        uint256 amount = 1000 * 10**18;
+        
+        vm.expectRevert();
+        token.transfer(address(0), amount);
+    }
+    
+    function test_ApproveZeroAddress() public {
+        uint256 amount = 1000 * 10**18;
+        
+        vm.expectRevert();
+        token.approve(address(0), amount);
+    }
+    
+    function test_MultipleTransfers() public {
+        uint256 amount1 = 1000 * 10**18;
+        uint256 amount2 = 2000 * 10**18;
+        
+        // Transfer to user1
+        token.transfer(user1, amount1);
+        assertEq(token.balanceOf(user1), amount1);
+        
+        // Transfer from user1 to user2
+        vm.prank(user1);
+        token.transfer(user2, amount1);
+        assertEq(token.balanceOf(user1), 0);
+        assertEq(token.balanceOf(user2), amount1);
+        
+        // Transfer more to user1
+        token.transfer(user1, amount2);
+        assertEq(token.balanceOf(user1), amount2);
+    }
+    
+    function test_Events() public {
+        uint256 amount = 1000 * 10**18;
+        
+        // Test Transfer event
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(owner, user1, amount);
+        token.transfer(user1, amount);
+        
+        // Test Approval event
+        vm.expectEmit(true, true, true, true);
+        emit Approval(owner, user2, amount);
+        token.approve(user2, amount);
+        
+        // Test TransferFrom event
+        vm.expectEmit(true, true, true, true);
+        emit Transfer(owner, user1, amount);
+        vm.prank(user2);
+        token.transferFrom(owner, user1, amount);
+    }
+    
+    function test_PartialTransferFrom() public {
+        uint256 approveAmount = 1000 * 10**18;
+        uint256 transferAmount = 500 * 10**18;
+        
+        // Approve larger amount
+        token.approve(user1, approveAmount);
+        
+        // Transfer partial amount
+        vm.prank(user1);
+        token.transferFrom(owner, user2, transferAmount);
+        
+        // Check remaining allowance
+        assertEq(token.allowance(owner, user1), approveAmount - transferAmount);
+        assertEq(token.balanceOf(user2), transferAmount);
+    }
+    
+    function test_FuzzTransfer(uint256 amount) public {
+        // Bound amount to reasonable range
+        amount = bound(amount, 1, token.balanceOf(owner));
+        
+        uint256 initialBalance = token.balanceOf(owner);
+        token.transfer(user1, amount);
+        
+        assertEq(token.balanceOf(user1), amount);
+        assertEq(token.balanceOf(owner), initialBalance - amount);
+    }
+    
+    // Events to test
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }

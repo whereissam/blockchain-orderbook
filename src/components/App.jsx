@@ -31,20 +31,13 @@ function App () {
       console.log('🚀 Starting loadBlockchainData...')
 
       // Connect Ethers to blockchain
-      const provider = loadProvider()
+      const provider = await loadProvider()
       console.log('Provider loaded:', provider)
 
       if (!provider) {
         console.log('❌ No provider available - MetaMask not detected or not connected')
-        if (window.showToast) {
-          window.showToast.error('MetaMask not detected', {
-            description: 'Please install MetaMask to continue',
-            action: {
-              label: 'Install',
-              onClick: () => window.open('https://metamask.io/', '_blank')
-            }
-          })
-        }
+        console.error('❌ MetaMask not detected')
+        alert('MetaMask not detected. Please install MetaMask extension.')
         return
       }
 
@@ -56,9 +49,8 @@ function App () {
     const account = await loadAccount(provider)
     if (!account) {
       console.error('❌ Failed to load account')
-      if (window.showToast) {
-        window.showToast('Failed to connect to account. Please connect MetaMask.', 'error', 5000)
-      }
+      console.error('❌ Failed to connect to account')
+      alert('Failed to connect to account. Please connect MetaMask.')
       return
     }
     console.log('✅ Account loaded:', account)
@@ -79,9 +71,8 @@ function App () {
     // Check if config exists for current chain
     if (!config[chainId]) {
       console.error(`❌ No configuration found for chain ID: ${chainId}`)
-      if (window.showToast) {
-        window.showToast(`Unsupported network. Please switch to a supported network.`, 'error', 5000)
-      }
+      console.error(`❌ Unsupported network: ${chainId}`)
+      alert(`Unsupported network. Please switch to a supported network.`)
       return
     }
     
@@ -90,9 +81,8 @@ function App () {
     
     if (!SSS || !mETH) {
       console.error('❌ Token configuration missing:', { SSS: !!SSS, mETH: !!mETH })
-      if (window.showToast) {
-        window.showToast('Token configuration missing. Please check network settings.', 'error', 5000)
-      }
+      console.error('❌ Token configuration missing')
+      alert('Token configuration missing. Please check network settings.')
       return
     }
     
@@ -100,9 +90,8 @@ function App () {
     const tokenResult = await loadToken(provider, [SSS.address, mETH.address])
     if (!tokenResult) {
       console.error('❌ Failed to load tokens')
-      if (window.showToast) {
-        window.showToast('Failed to load tokens. Please refresh the page.', 'error', 5000)
-      }
+      console.error('❌ Failed to load tokens')
+      alert('Failed to load tokens. Please refresh the page.')
     } else {
       console.log('✅ Tokens loaded successfully')
     }
@@ -111,9 +100,8 @@ function App () {
     const exchangeConfig = config[chainId].exchange
     if (!exchangeConfig) {
       console.error('❌ Exchange configuration missing')
-      if (window.showToast) {
-        window.showToast('Exchange configuration missing. Please check network settings.', 'error', 5000)
-      }
+      console.error('❌ Exchange configuration missing')
+      alert('Exchange configuration missing. Please check network settings.')
       return
     }
     
@@ -121,9 +109,8 @@ function App () {
     const exchange = await loadExchange(provider, exchangeConfig.address)
     if (!exchange) {
       console.error('❌ Failed to load exchange')
-      if (window.showToast) {
-        window.showToast('Failed to load exchange. Please refresh the page.', 'error', 5000)
-      }
+      console.error('❌ Failed to load exchange')
+      alert('Failed to load exchange. Please refresh the page.')
       return
     }
     console.log('✅ Exchange loaded:', exchange.address || exchange.target)
@@ -139,9 +126,8 @@ function App () {
     console.log('🎉 Blockchain data loaded successfully!')
   } catch (error) {
     console.error('❌ Error in loadBlockchainData:', error)
-    if (window.showToast) {
-      window.showToast(`Failed to load blockchain data: ${error.message}`, 'error', 5000)
-    }
+    console.error('❌ Failed to load blockchain data:', error.message)
+    alert(`Failed to load blockchain data: ${error.message}`)
   }
 }, [])
 

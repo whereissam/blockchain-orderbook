@@ -180,8 +180,8 @@ const useExchangeStore = create(
 
     state.transaction = {
       transactionType: 'New Order',
-      isPending: true,
-      isSuccessful: false
+      isPending: false,
+      isSuccessful: true
     }
     state.events.unshift(event)
   }),

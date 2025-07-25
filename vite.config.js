@@ -78,7 +78,30 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/test/setup.js'],
-    css: true
+    setupFiles: ['./src/__tests__/setup.jsx'],
+    css: false, // Disable CSS processing in tests
+    testTimeout: 30000, // 30 seconds for blockchain tests
+    hookTimeout: 30000,
+    teardownTimeout: 30000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: [
+        'node_modules/',
+        'src/__tests__/',
+        'scripts/',
+        'contracts/',
+        'dist/',
+        '**/*.config.js',
+        '**/*.config.ts'
+      ]
+    },
+    // Handle CSS and other static assets
+    assetsInclude: [],
+    // Mock CSS modules and other assets
+    moduleNameMapper: {
+      '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+      '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/src/__tests__/fileMock.js'
+    }
   }
 })

@@ -6,27 +6,43 @@ import useTokensStore from './tokensStore'
 import useExchangeStore from './exchangeStore'
 
 //1. Load provider(Login wallet) - get the connection info
-export const loadProvider = () => {
+export const loadProvider = async () => {
   if (!window.ethereum) {
     console.log('MetaMask not detected')
     return null
   }
   
-  // Use Alchemy RPC for better rate limits on Base Sepolia
-  const ALCHEMY_RPC_URL = 'https://base-sepolia.g.alchemy.com/v2/SVPGtLg2pMLIc57MJXG-R1En6DcnBB9K'
-  
   const connection = new ethers.BrowserProvider(window.ethereum)
   
-  // Override the connection to use Alchemy for read operations
-  const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_RPC_URL)
-  
-  // Create a hybrid provider: use MetaMask for signing, Alchemy for reading
-  connection._getProvider = () => alchemyProvider._getProvider()
-  connection.getBlockNumber = () => alchemyProvider.getBlockNumber()
-  connection.getBlock = (block) => alchemyProvider.getBlock(block)
-  connection.queryFilter = (filter, fromBlock, toBlock) => alchemyProvider.queryFilter(filter, fromBlock, toBlock)
-  connection.getCode = (address) => alchemyProvider.getCode(address)
-  connection.call = (transaction) => alchemyProvider.call(transaction)
+  try {
+    // Get the current network to determine which provider to use
+    const network = await connection.getNetwork()
+    const chainId = Number(network.chainId)
+    
+    // Only use Alchemy for Base Sepolia, use MetaMask directly for other networks
+    if (chainId === 84532) { // Base Sepolia
+      const ALCHEMY_RPC_URL = 'https://base-sepolia.g.alchemy.com/v2/SVPGtLg2pMLIc57MJXG-R1En6DcnBB9K'
+      const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_RPC_URL)
+      
+      // Create a hybrid provider: use MetaMask for signing, Alchemy for reading
+      connection._getProvider = () => alchemyProvider._getProvider()
+      connection.getBlockNumber = () => alchemyProvider.getBlockNumber()
+      connection.getBlock = (block) => alchemyProvider.getBlock(block)
+      connection.queryFilter = (filter, fromBlock, toBlock) => alchemyProvider.queryFilter(filter, fromBlock, toBlock)
+      connection.getCode = (address) => alchemyProvider.getCode(address)
+      connection.call = (transaction) => alchemyProvider.call(transaction)
+      
+      console.log('Using Alchemy provider for Base Sepolia')
+    } else if (chainId === 31337) { // Localhost
+      console.log('Using MetaMask provider for localhost development')
+      // Use MetaMask directly for localhost - no modifications needed
+    } else {
+      console.log(`Using MetaMask provider for network ${chainId}`)
+      // Use MetaMask directly for other networks
+    }
+  } catch (error) {
+    console.log('Could not determine network, using MetaMask provider directly:', error)
+  }
   
   useProviderStore.getState().loadProvider(connection)
   return connection
@@ -61,10 +77,32 @@ export const loadAccount = async (provider) => {
     const account = ethers.getAddress(accounts[0])
     useProviderStore.getState().loadAccount(account)
 
-    let balance = await provider.getBalance(account)
-    balance = ethers.formatEther(balance)
-
-    useProviderStore.getState().loadEtherBalance(balance)
+    // Get balance with retry logic for rate limiting
+    let balance
+    try {
+      const getBalanceWithRetry = async (maxRetries = 3) => {
+        for (let i = 0; i < maxRetries; i++) {
+          try {
+            return await provider.getBalance(account)
+          } catch (error) {
+            if (error.message.includes('rate limit') && i < maxRetries - 1) {
+              console.log(`📊 Rate limited getting balance, retrying in ${(i + 1) * 2} seconds...`)
+              await new Promise(resolve => setTimeout(resolve, (i + 1) * 2000))
+              continue
+            }
+            throw error
+          }
+        }
+      }
+      
+      balance = await getBalanceWithRetry()
+      balance = ethers.formatEther(balance)
+      useProviderStore.getState().loadEtherBalance(balance)
+    } catch (balanceError) {
+      console.warn('⚠️ Could not get balance due to rate limiting, using 0.0')
+      balance = '0.0'
+      useProviderStore.getState().loadEtherBalance(balance)
+    }
 
     return account
   } catch (error) {
@@ -163,9 +201,8 @@ export const loadToken = async (provider, addresses) => {
 
   if (successCount === 0) {
     console.error('❌ No tokens loaded successfully!')
-    if (window.showToast) {
-      window.showToast('No contracts found at the configured addresses. Check your network and contract deployments.', 'error', 8000)
-    }
+    console.error('❌ No contracts found at the configured addresses. Check your network and contract deployments.')
+    alert('No contracts found at the configured addresses. Check your network and contract deployments.')
   }
 
   return successCount > 0 ? (token2 || token1) : null
@@ -218,9 +255,8 @@ export const loadExchange = async (provider, address) => {
     return exchange
   } catch (error) {
     console.error('❌ Error loading exchange:', error)
-    if (window.showToast) {
-      window.showToast(`Failed to load exchange contract: ${error.message}`, 'error', 5000)
-    }
+    console.error('❌ Failed to load exchange contract:', error.message)
+    alert(`Failed to load exchange contract: ${error.message}`)
     return null
   }
 }
@@ -296,9 +332,8 @@ export const loadBalances = async (exchange, tokens, account) => {
     console.log('Balances loaded successfully')
   } catch (error) {
     console.error('Error loading balances:', error)
-    if (window.showToast) {
-      window.showToast('Error loading balances. Please refresh.', 'error', 3000)
-    }
+    console.error('❌ Error loading balances. Please refresh.')
+    alert('Error loading balances. Please refresh.')
   }
 }
 
@@ -337,9 +372,8 @@ export const loadAllOrders = async (provider, exchange) => {
     console.log('Orders loaded successfully')
   } catch (error) {
     console.error('Error loading orders:', error)
-    if (window.showToast) {
-      window.showToast('Error loading orders. Some features may not work.', 'error', 3000)
-    }
+    console.error('❌ Error loading orders. Some features may not work.')
+    alert('Error loading orders. Some features may not work.')
   }
 }
 
@@ -353,30 +387,82 @@ export const transferTokens = async (provider, exchange, transferType, token, am
   try {
     const signer = await provider.getSigner()
     const amountToTransfer = ethers.parseUnits(amount.toString(), 18)
+    const account = await signer.getAddress()
+    
+    // Pre-flight checks to prevent "missing revert data" errors
+    if (transferType === 'Deposit') {
+      // Check if user has enough token balance
+      const tokenBalance = await token.balanceOf(account)
+      if (tokenBalance < amountToTransfer) {
+        throw new Error(`Insufficient token balance. You have ${ethers.formatEther(tokenBalance)} but trying to deposit ${amount}`)
+      }
+    } else {
+      // Check if user has enough balance in exchange
+      const exchangeBalance = await exchange.balanceOf(token.address, account)
+      if (exchangeBalance < amountToTransfer) {
+        throw new Error(`Insufficient exchange balance. You have ${ethers.formatEther(exchangeBalance)} but trying to withdraw ${amount}`)
+      }
+    }
+
+    // Retry function for rate limited requests
+    const executeWithRetry = async (fn, maxRetries = 3) => {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await fn()
+        } catch (error) {
+          if (error.message.includes('rate limit') && i < maxRetries - 1) {
+            console.log(`📊 Rate limited, retrying in ${(i + 1) * 2} seconds...`)
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 2000))
+            continue
+          }
+          throw error
+        }
+      }
+    }
 
     if (transferType === 'Deposit') {
-      transaction = await token.connect(signer).approve(exchange.address, amountToTransfer)
+      // First approve with retry
+      transaction = await executeWithRetry(() => 
+        token.connect(signer).approve(exchange.address, amountToTransfer)
+      )
       await transaction.wait()
-      transaction = await exchange.connect(signer).depositToken(token.address, amountToTransfer)
+      
+      // Small delay between transactions
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Then deposit with retry
+      transaction = await executeWithRetry(() =>
+        exchange.connect(signer).depositToken(token.address, amountToTransfer)
+      )
     } else {
-      transaction = await exchange.connect(signer).withdrawToken(token.address, amountToTransfer)
+      transaction = await executeWithRetry(() =>
+        exchange.connect(signer).withdrawToken(token.address, amountToTransfer)
+      )
     }
-    await transaction.wait()
     
+    await transaction.wait()
     exchangeStore.transferSuccess(null)
   } catch (error) {
     console.error('Transfer failed:', error)
-    if (window.showToast) {
-      if (error.code === 'ACTION_REJECTED' || error.message.includes('user rejected') || error.message.includes('user denied')) {
-        window.showToast('Transaction cancelled by user', 'warning', 3000)
-      } else if (error.message.includes('insufficient funds')) {
-        window.showToast('Insufficient balance for this transaction', 'error', 4000)
-      } else if (error.message.includes('gas')) {
-        window.showToast('Transaction failed due to gas estimation error', 'error', 4000)
-      } else {
-        window.showToast(`Transaction failed: ${error.message.split('\n')[0]}`, 'error', 4000)
-      }
+    
+    let errorMessage = 'Transaction failed'
+    
+    if (error.code === 'ACTION_REJECTED' || error.message.includes('user rejected') || error.message.includes('user denied')) {
+      errorMessage = 'Transaction cancelled by user'
+    } else if (error.message.includes('insufficient funds')) {
+      errorMessage = 'Insufficient balance for this transaction'
+    } else if (error.message.includes('missing revert data')) {
+      errorMessage = 'Transaction failed - likely insufficient balance or tokens not approved'
+    } else if (error.message.includes('gas')) {
+      errorMessage = 'Transaction failed due to gas estimation error'
+    } else if (error.message.includes('rate limit')) {
+      errorMessage = 'Request rate limited - please try again in a moment'
+    } else {
+      errorMessage = `Transaction failed: ${error.message.split('\n')[0]}`
     }
+    
+    console.error('💥 Transfer Error:', errorMessage)
+    alert(errorMessage) // Temporary fallback until toast is properly set up
     exchangeStore.transferFail()
   }
 }
@@ -410,29 +496,72 @@ export const makeBuyOrder = async (provider, exchange, tokens, order) => {
 
     exchangeStore.newOrderRequest()
 
-    // Show loading toast for order creation
-    if (window.blockchainToasts) {
-      window.blockchainToasts.orderCreating('buy', order.amount, order.price)
-    }
+    // Log order creation
+    console.log(`📝 Creating buy order: ${order.amount} at ${order.price}`)
 
     const signer = await provider.getSigner()
-    const transaction = await exchange.connect(signer).makeOrder(tokenGet, amountGet, tokenGive, amountGive)
+    
+    // Add gas settings for faster confirmation
+    const gasSettings = {
+      gasLimit: 200000, // Set reasonable gas limit
+      maxFeePerGas: ethers.parseUnits('2', 'gwei'), // Higher fee for faster processing
+      maxPriorityFeePerGas: ethers.parseUnits('1', 'gwei')
+    }
+    
+    // Retry function for rate limited requests
+    const executeWithRetry = async (fn, maxRetries = 3) => {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await fn()
+        } catch (error) {
+          if (error.message.includes('rate limit') && i < maxRetries - 1) {
+            console.log(`📊 Rate limited, retrying order in ${(i + 1) * 2} seconds...`)
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 2000))
+            continue
+          }
+          throw error
+        }
+      }
+    }
+    
+    const transaction = await executeWithRetry(() =>
+      exchange.connect(signer).makeOrder(
+        tokenGet, amountGet, tokenGive, amountGive, gasSettings
+      )
+    )
     
     console.log('📝 Transaction sent:', transaction.hash)
     
-    // Show pending transaction toast
-    if (window.blockchainToasts) {
-      window.blockchainToasts.transactionPending(transaction.hash)
+    // Log pending transaction
+    console.log(`⏳ Transaction pending: ${transaction.hash}`)
+    
+    // Wait for confirmation with timeout and retry logic
+    const waitForReceipt = async (maxRetries = 5) => {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await Promise.race([
+            transaction.wait(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Transaction timeout after 60 seconds')), 60000)
+            )
+          ])
+        } catch (error) {
+          if (error.message.includes('rate limit') && i < maxRetries - 1) {
+            console.log(`📊 Rate limited waiting for receipt, retrying in ${(i + 1) * 3} seconds...`)
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 3000))
+            continue
+          }
+          throw error
+        }
+      }
     }
     
-    await transaction.wait()
+    const receipt = await waitForReceipt()
     
-    console.log('✅ Buy order created successfully')
+    console.log('✅ Buy order created successfully', receipt)
     
-    // Show success toast with transaction link
-    if (window.blockchainToasts) {
-      window.blockchainToasts.orderSuccess('Buy', order.amount, order.price, transaction.hash)
-    }
+    // Log success
+    console.log(`✅ Buy order successful: ${order.amount} at ${order.price}, TX: ${transaction.hash}`)
     
     exchangeStore.newOrderSuccess()
   } catch (error) {
@@ -440,10 +569,22 @@ export const makeBuyOrder = async (provider, exchange, tokens, order) => {
     const exchangeStore = useExchangeStore.getState()
     exchangeStore.newOrderFail()
     
-    // Show enhanced error toast
-    if (window.blockchainToasts) {
-      window.blockchainToasts.orderError('buy', error)
+    // Enhanced error handling
+    console.error('💥 Buy order failed:', error.message)
+    
+    // If transaction was submitted but receipt failed due to rate limiting, 
+    // the order might still have been processed
+    if (transaction && transaction.hash && error.message.includes('rate limit')) {
+      console.log('⚠️ Transaction was submitted but receipt failed due to rate limiting')
+      console.log(`🔗 Check transaction: https://sepolia.basescan.org/tx/${transaction.hash}`)
+      alert(`Order was submitted but confirmation failed due to rate limiting. Check transaction: ${transaction.hash}`)
+      
+      // Still try to update the UI optimistically
+      exchangeStore.newOrderSuccess()
+      return
     }
+    
+    alert(`Buy order failed: ${error.message.split('\n')[0]}`)
   }
 }
 
@@ -475,29 +616,72 @@ export const makeSellOrder = async (provider, exchange, tokens, order) => {
 
     exchangeStore.newOrderRequest()
 
-    // Show loading toast for order creation
-    if (window.blockchainToasts) {
-      window.blockchainToasts.orderCreating('sell', order.amount, order.price)
-    }
+    // Log order creation
+    console.log(`📝 Creating sell order: ${order.amount} at ${order.price}`)
 
     const signer = await provider.getSigner()
-    const transaction = await exchange.connect(signer).makeOrder(tokenGet, amountGet, tokenGive, amountGive)
+    
+    // Add gas settings for faster confirmation
+    const gasSettings = {
+      gasLimit: 200000, // Set reasonable gas limit
+      maxFeePerGas: ethers.parseUnits('2', 'gwei'), // Higher fee for faster processing
+      maxPriorityFeePerGas: ethers.parseUnits('1', 'gwei')
+    }
+    
+    // Retry function for rate limited requests
+    const executeWithRetry = async (fn, maxRetries = 3) => {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await fn()
+        } catch (error) {
+          if (error.message.includes('rate limit') && i < maxRetries - 1) {
+            console.log(`📊 Rate limited, retrying order in ${(i + 1) * 2} seconds...`)
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 2000))
+            continue
+          }
+          throw error
+        }
+      }
+    }
+    
+    const transaction = await executeWithRetry(() =>
+      exchange.connect(signer).makeOrder(
+        tokenGet, amountGet, tokenGive, amountGive, gasSettings
+      )
+    )
     
     console.log('📝 Transaction sent:', transaction.hash)
     
-    // Show pending transaction toast
-    if (window.blockchainToasts) {
-      window.blockchainToasts.transactionPending(transaction.hash)
+    // Log pending transaction
+    console.log(`⏳ Transaction pending: ${transaction.hash}`)
+    
+    // Wait for confirmation with timeout and retry logic
+    const waitForReceipt = async (maxRetries = 5) => {
+      for (let i = 0; i < maxRetries; i++) {
+        try {
+          return await Promise.race([
+            transaction.wait(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Transaction timeout after 60 seconds')), 60000)
+            )
+          ])
+        } catch (error) {
+          if (error.message.includes('rate limit') && i < maxRetries - 1) {
+            console.log(`📊 Rate limited waiting for receipt, retrying in ${(i + 1) * 3} seconds...`)
+            await new Promise(resolve => setTimeout(resolve, (i + 1) * 3000))
+            continue
+          }
+          throw error
+        }
+      }
     }
     
-    await transaction.wait()
+    const receipt = await waitForReceipt()
     
-    console.log('✅ Sell order created successfully')
+    console.log('✅ Sell order created successfully', receipt)
     
-    // Show success toast with transaction link
-    if (window.blockchainToasts) {
-      window.blockchainToasts.orderSuccess('Sell', order.amount, order.price, transaction.hash)
-    }
+    // Log success
+    console.log(`✅ Sell order successful: ${order.amount} at ${order.price}, TX: ${transaction.hash}`)
     
     exchangeStore.newOrderSuccess()
   } catch (error) {
@@ -505,10 +689,9 @@ export const makeSellOrder = async (provider, exchange, tokens, order) => {
     const exchangeStore = useExchangeStore.getState()
     exchangeStore.newOrderFail()
     
-    // Show enhanced error toast
-    if (window.blockchainToasts) {
-      window.blockchainToasts.orderError('sell', error)
-    }
+    // Log error
+    console.error('💥 Sell order failed:', error.message)
+    alert(`Sell order failed: ${error.message.split('\n')[0]}`)
   }
 }
 
@@ -546,29 +729,71 @@ export const fillOrder = async (provider, exchange, order) => {
 export const claimTestTokens = async (provider, tokenAddress, tokenSymbol) => {
   try {
     console.log(`🪙 Claiming ${tokenSymbol} tokens...`)
-    
-    if (window.showToast) {
-      window.showToast(`Requesting ${tokenSymbol} tokens...`, 'info', 3000)
-    }
 
     const signer = await provider.getSigner()
     const userAddress = await signer.getAddress()
+    const tokenContract = new ethers.Contract(tokenAddress, TOKEN_ABI, signer)
     
-    // Try to call transfer function from deployer to user (if deployer has tokens)
-    const tokenContract = new ethers.Contract(tokenAddress, TOKEN_ABI, provider)
-    
-    // Check current balance
+    // Check current balance before claiming
     const currentBalance = await tokenContract.balanceOf(userAddress)
     const balanceFormatted = ethers.formatEther(currentBalance)
-    const balanceNumber = parseFloat(balanceFormatted)
     console.log(`ℹ️ Current ${tokenSymbol} balance: ${balanceFormatted}`)
 
-    // Use enhanced token claim toast
-    if (window.blockchainToasts) {
-      window.blockchainToasts.tokenClaim(tokenSymbol, balanceNumber)
+    // Try different claiming methods
+    let transaction
+    const claimAmount = ethers.parseEther("1000") // Try to claim 1000 tokens
+    
+    try {
+      // Method 1: Try faucet function (common in test tokens)
+      if (tokenContract.faucet) {
+        console.log(`🚰 Trying faucet method for ${tokenSymbol}...`)
+        transaction = await tokenContract.faucet()
+        await transaction.wait()
+        console.log(`✅ Faucet successful for ${tokenSymbol}`)
+      }
+    } catch (error) {
+      console.log(`❌ Faucet method failed: ${error.message}`)
+      
+      try {
+        // Method 2: Try mint function (if user has permission)
+        if (tokenContract.mint) {
+          console.log(`🏭 Trying mint method for ${tokenSymbol}...`)
+          transaction = await tokenContract.mint(userAddress, claimAmount)
+          await transaction.wait()
+          console.log(`✅ Mint successful for ${tokenSymbol}`)
+        }
+      } catch (mintError) {
+        console.log(`❌ Mint method failed: ${mintError.message}`)
+        
+        try {
+          // Method 3: Try claim function with amount
+          if (tokenContract.claim) {
+            console.log(`📥 Trying claim method for ${tokenSymbol}...`)
+            transaction = await tokenContract.claim(claimAmount)
+            await transaction.wait()
+            console.log(`✅ Claim successful for ${tokenSymbol}`)
+          }
+        } catch (claimError) {
+          console.log(`❌ Claim method failed: ${claimError.message}`)
+          throw new Error(`No working claim method found for ${tokenSymbol}. Available methods: ${Object.getOwnPropertyNames(tokenContract).filter(name => typeof tokenContract[name] === 'function').join(', ')}`)
+        }
+      }
     }
     
-    // Copy user address to clipboard if available
+    // Wait a moment for balance to update
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    
+    // Check new balance
+    const newBalance = await tokenContract.balanceOf(userAddress)
+    const newBalanceFormatted = ethers.formatEther(newBalance)
+    const difference = ethers.formatEther(newBalance - currentBalance)
+    
+    console.log(`💰 Successfully claimed ${difference} ${tokenSymbol} tokens!`)
+    console.log(`💰 New ${tokenSymbol} balance: ${newBalanceFormatted}`)
+    
+    alert(`Successfully claimed ${difference} ${tokenSymbol} tokens! New balance: ${newBalanceFormatted}`)
+    
+    // Copy user address to clipboard
     if (navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(userAddress)
@@ -582,9 +807,18 @@ export const claimTestTokens = async (provider, tokenAddress, tokenSymbol) => {
 
   } catch (error) {
     console.error(`❌ Error claiming ${tokenSymbol} tokens:`, error)
-    if (window.showToast) {
-      window.showToast(`Failed to check ${tokenSymbol} balance: ${error.message}`, 'error', 5000)
+    
+    let errorMessage = `Failed to claim ${tokenSymbol} tokens`
+    if (error.message.includes('No working claim method')) {
+      errorMessage = `${tokenSymbol} tokens don't have a public claim/faucet function. You may need to contact the deployer or use a different method to get test tokens.`
+    } else if (error.message.includes('already claimed') || error.message.includes('cooldown')) {
+      errorMessage = `You've already claimed ${tokenSymbol} tokens recently. Please wait before claiming again.`
+    } else {
+      errorMessage = `Failed to claim ${tokenSymbol} tokens: ${error.message.split('\n')[0]}`
     }
+    
+    console.error(`💥 ${errorMessage}`)
+    alert(errorMessage)
     return false
   }
 }
@@ -604,9 +838,8 @@ export const mintTokensAsDeployer = async (provider, tokenAddress, tokenSymbol, 
     const contractBalance = await tokenContract.balanceOf(tokenAddress)
     console.log(`Contract ${tokenSymbol} balance:`, ethers.formatEther(contractBalance))
     
-    if (window.showToast) {
-      window.showToast(`Minting not available. Contact deployer for test tokens.`, 'warning', 5000)
-    }
+    console.warn('⚠️  Minting not available. Contact deployer for test tokens.')
+    alert('Minting not available. Contact deployer for test tokens.')
     
     return false
     
@@ -710,17 +943,22 @@ export const loadAllOrdersWithHistory = async (provider, exchange) => {
     
     // Use smaller chunks to avoid RPC limits and rate limiting
     const maxBlockRange = 500  // Reduced from 1000 to be more conservative
-    const targetBlocksBack = 2000 // Reduced from 10,000 to avoid rate limits
-    const startBlock = Math.max(0, block - targetBlocksBack)
+    const targetBlocksBack = 2000 // Reduced back to 2000 for recent orders, but ensure we get current block
+    
+    // Get fresh current block to ensure we capture very recent transactions
+    const currentBlock = await provider.getBlockNumber()
+    const startBlock = Math.max(0, currentBlock - targetBlocksBack)
+    
+    console.log(`📊 Current block: ${currentBlock}, searching from ${startBlock} to ${currentBlock}`)
     
     console.log(`📊 Loading orders in chunks from block ${startBlock} to ${block}`)
     
     let allCancelledOrders = []
     let allFilledOrders = []
     
-    // Query in chunks of 1000 blocks
-    for (let fromBlock = startBlock; fromBlock < block; fromBlock += maxBlockRange) {
-      const toBlock = Math.min(fromBlock + maxBlockRange - 1, block)
+    // Query in chunks using the current block
+    for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += maxBlockRange) {
+      const toBlock = Math.min(fromBlock + maxBlockRange - 1, currentBlock)
       
       try {
         console.log(`📊 Querying chunk: blocks ${fromBlock} to ${toBlock}`)
@@ -766,8 +1004,8 @@ export const loadAllOrdersWithHistory = async (provider, exchange) => {
     
     // Load all orders in chunks too
     let allOrders = []
-    for (let fromBlock = startBlock; fromBlock < block; fromBlock += maxBlockRange) {
-      const toBlock = Math.min(fromBlock + maxBlockRange - 1, block)
+    for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += maxBlockRange) {
+      const toBlock = Math.min(fromBlock + maxBlockRange - 1, currentBlock)
       
       try {
         console.log(`📊 Querying orders chunk: blocks ${fromBlock} to ${toBlock}`)
