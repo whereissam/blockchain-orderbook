@@ -73,7 +73,7 @@ deploy_contracts() {
     export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
     export ETHERSCAN_API_KEY=dummy
     
-    if forge script script/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --skip-simulation > deploy.log 2>&1; then
+    if forge script scripts/foundry/Deploy.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --skip-simulation > deploy.log 2>&1; then
         print_status "Contracts deployed successfully"
     else
         print_error "Contract deployment failed. Check deploy.log for details."
@@ -88,7 +88,7 @@ seed_data() {
     export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
     export ETHERSCAN_API_KEY=dummy
     
-    if forge script script/Seed.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --skip-simulation > seed.log 2>&1; then
+    if forge script scripts/foundry/Seed.s.sol --rpc-url http://127.0.0.1:8545 --broadcast --skip-simulation > seed.log 2>&1; then
         print_status "Test data seeded successfully"
     else
         print_error "Data seeding failed. Check seed.log for details."

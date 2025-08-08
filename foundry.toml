@@ -22,7 +22,13 @@ gas_reports = ["*"]
 # Remappings for imports
 remappings = [
     "@forge-std/=lib/forge-std/src/",
-    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
+    "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/",
+    "@contracts/=contracts/",
+    "@interfaces/=contracts/interfaces/",
+    "@core/=contracts/core/",
+    "@libraries/=contracts/libraries/",
+    "@mocks/=contracts/mocks/",
+    "@utils/=contracts/utils/"
 ]
 
 # RPC endpoints

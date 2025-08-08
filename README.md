@@ -1,197 +1,142 @@
-# SSS Token Exchange 
+# 🚀 Blockchain Order Book Exchange
 
-A decentralized exchange (DEX) built with React, Solidity, and Foundry for trading SSS tokens on Base Sepolia testnet.
+A decentralized exchange (DEX) with a complete order book system built on Ethereum. Features token trading, order management, and real-time price charts.
 
-## 🚀 Quick Start
+## ✨ Features
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18+)
-- [Bun](https://bun.sh/) package manager
-- [MetaMask](https://metamask.io/) browser extension
-- [Foundry](https://book.getfoundry.sh/getting-started/installation) toolkit
-
-### 1. Clone & Install
-```bash
-git clone <repository-url>
-cd blockchain-orderbook
-bun install
-```
-
-### 2. Setup Environment
-```bash
-# Copy environment file
-cp .env.example .env
-
-# Add your private key to .env (without 0x prefix)
-# PRIVATE_KEY=your_private_key_here
-```
-
-### 3. Switch to Base Sepolia Network
-
-#### Option A: Use the App (Recommended)
-1. Start the development server: `bun run dev`
-2. Open http://localhost:5173
-3. Connect your MetaMask wallet
-4. Click the network dropdown in the navbar
-5. Select **"Base Sepolia"**
-
-#### Option B: Add Base Sepolia Manually
-Add Base Sepolia network to MetaMask:
-- **Network Name**: Base Sepolia
-- **RPC URL**: https://sepolia.base.org
-- **Chain ID**: 84532
-- **Symbol**: ETH
-- **Block Explorer**: https://sepolia.basescan.org/
-
-### 4. Get Test Tokens
-
-#### Get Base Sepolia ETH
-Visit the [Coinbase Base Faucet](https://www.coinbase.com/faucets/base-ethereum-sepolia-faucet) to get Base Sepolia ETH for gas fees.
-
-#### Get SSS Test Tokens
-Contracts are already deployed on Base Sepolia. Get test tokens:
-```bash
-bun run seed:base-sepolia
-```
-
-This will send SSS and mETH tokens directly to your wallet address.
-
-### 5. Add SSS Token to MetaMask
-1. Open MetaMask
-2. Click "Import Tokens"
-3. **Contract Address**: `0x4cC9e56C00a7b94424D94231bF5B603a32a0BF6D`
-4. **Symbol**: SSS
-5. **Decimals**: 18
-
-### 6. Start Trading!
-1. Visit the Balance tab in the app
-2. Deposit your SSS tokens to the exchange
-3. Start placing buy/sell orders
-
-## 📋 Available Commands
-
-### Development
-```bash
-bun run dev          # Start development server
-bun run build        # Build for production
-bun run preview      # Preview production build
-```
-
-### Smart Contracts
-```bash
-# Compile contracts
-bun run compile
-
-# Test contracts  
-bun run test:contracts
-
-# Deploy to networks
-bun run deploy:base-sepolia
-bun run deploy:ethereum-sepolia
-bun run deploy:local
-
-# Seed test data
-bun run seed:base-sepolia
-bun run seed:ethereum-sepolia
-bun run seed:local
-```
-
-### Code Quality
-```bash
-bun run lint         # Lint and fix code
-bun run format       # Format code
-bun run type-check   # TypeScript type checking
-```
-
-## 🌐 Supported Networks
-
-### Base Sepolia (Recommended)
-- **Chain ID**: 84532
-- **Status**: ✅ Contracts deployed and ready
-- **Tokens**: SSS, mETH, mDAI
-- **Exchange**: Fully functional
-
-### Ethereum Sepolia
-- **Chain ID**: 11155111
-- **Status**: Requires manual deployment
-- **Setup**: Run `bun run deploy:ethereum-sepolia`
-
-### Localhost Development
-- **Chain ID**: 31337
-- **Status**: Requires local setup
-- **Setup**: 
-  1. `bun run node:local` 
-  2. `bun run deploy:local`
-  3. `bun run seed:local`
-
-## 📦 Contract Addresses (Base Sepolia)
-
-- **SSS Token**: `0x4cC9e56C00a7b94424D94231bF5B603a32a0BF6D`
-- **mETH Token**: `0xe6f9D40767Db3D90ac878228ABf407C675de1ba5`  
-- **mDAI Token**: `0xAD2A615a5121A79124e9704C259e7772721386a7`
-- **Exchange**: `0x43d827e34D3e98F987075a469C513f8b8bA28a26`
-
-## 🎯 Features
-
-- **Token Trading**: Trade SSS tokens against mETH/mDAI
-- **Order Book**: View live buy/sell orders
-- **Balance Management**: Deposit/withdraw tokens
-- **Price Charts**: Real-time price visualization
-- **Multi-Network**: Support for multiple testnets
-- **Responsive UI**: Works on desktop and mobile
-
-## 🔧 Troubleshooting
-
-### "Transaction Will Fail" Error
-This usually means:
-1. **No tokens in wallet** → Get tokens using `bun run seed:base-sepolia`
-2. **Wrong network** → Switch to Base Sepolia
-3. **Insufficient balance** → Check your SSS token balance
-
-### Network Issues
-- Make sure you're on Base Sepolia (Chain ID: 84532)
-- Add Base Sepolia network to MetaMask if it's not showing
-- Get Base Sepolia ETH from the faucet for gas fees
-
-### Missing Tokens
-- Import SSS token using contract address: `0x4cC9e56C00a7b94424D94231bF5B603a32a0BF6D`
-- Run seed script: `bun run seed:base-sepolia`
+- **Complete Order Book** - Create, fill, and cancel buy/sell orders
+- **Token Trading** - Trade ERC-20 tokens with automated market making
+- **Real-time Interface** - Live updates of orders, trades, and balances  
+- **Fee System** - Configurable trading fees with automatic distribution
+- **Multi-network Support** - Works on Ethereum, Base, and local testnets
 
 ## 🏗️ Architecture
 
-### Frontend
-- **React 19** with functional components
-- **Vite** for fast development
-- **Zustand** for state management
-- **ethers.js** for blockchain interaction
-- **ApexCharts** for price visualization
-
 ### Smart Contracts
-- **Solidity 0.8.9** 
-- **Foundry** for development and testing
-- **ERC-20 tokens** (SSS, mETH, mDAI)
-- **Exchange contract** with order book functionality
+- **Exchange Contract** - Core trading logic and order management
+- **Token Contracts** - ERC-20 tokens for testing (SSS, mETH, mDAI)
+- **Libraries** - Reusable exchange utilities
 
-### Development Tools
-- **Foundry** for smart contract development
-- **ESLint + Prettier** for code quality
-- **Husky** for git hooks
-- **Vitest** for testing
+### Frontend
+- **React + Vite** - Modern web interface
+- **Web3 Integration** - MetaMask wallet connection
+- **Real-time Updates** - Live trading data via WebSocket-like events
+- **Responsive Design** - Works on desktop, tablet, and mobile
 
-## 📚 Documentation
+## 🚀 Quick Start
 
-- [Foundry Book](https://book.getfoundry.sh/) - Smart contract development
-- [Base Docs](https://docs.base.org/) - Base blockchain documentation
-- [ethers.js](https://docs.ethers.org/) - Ethereum library documentation
+### Local Development
+
+1. **Start local blockchain:**
+   ```bash
+   npm run node:local
+   ```
+
+2. **Deploy contracts:**
+   ```bash
+   npm run deploy:local
+   ```
+
+3. **Start frontend:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Setup MetaMask:**
+   - Click "ℹ️ Local Setup" button in the frontend
+   - Follow the interactive setup guide
+
+### Production Deployment
+
+See [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md) for complete deployment instructions.
+
+## 🧪 Testing
+
+```bash
+# Smart contract tests
+npm run test:contracts
+
+# Frontend tests  
+npm run test
+
+# End-to-end tests
+npm run test:e2e
+
+# Complete integration test
+npm run test:full
+```
+
+## 📁 Project Structure
+
+```
+├── contracts/           # Smart contracts
+├── src/                # Frontend React app
+├── scripts/            # Deployment and utility scripts
+├── test/               # Smart contract tests
+├── docs/               # Documentation
+├── screenshots/        # UI screenshots
+├── archive/            # Legacy files and old tests
+└── deployments/        # Deployment artifacts
+```
+
+## 📖 Documentation
+
+- **[Local Setup Guide](docs/LOCALNET_SETUP.md)** - Complete local development setup
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment instructions
+- **[Testing Guide](docs/TESTING_GUIDE.md)** - How to run and write tests
+- **[Contract Structure](docs/CONTRACTS_STRUCTURE.md)** - Smart contract architecture
+- **[UI Color Guide](docs/COLOR_GUIDE.md)** - Frontend styling reference
+
+## 🔧 Key Commands
+
+```bash
+# Development
+npm run dev              # Start frontend
+npm run node:local       # Start Anvil (local blockchain)
+npm run deploy:local     # Deploy to local network
+
+# Testing
+npm run test:contracts   # Run Forge tests
+npm run test            # Run frontend tests
+npm run test:e2e        # End-to-end tests
+
+# Build
+npm run build           # Build for production
+npm run compile         # Compile smart contracts
+
+# Deployment
+npm run deploy:base-sepolia     # Deploy to Base Sepolia
+npm run deploy:ethereum-sepolia # Deploy to Ethereum Sepolia
+```
+
+## 🌐 Live Demo
+
+- **Base Sepolia**: [View contracts on BaseScan](https://sepolia.basescan.org/)
+- **Ethereum Sepolia**: [View contracts on Etherscan](https://sepolia.etherscan.io/)
+
+## 🔒 Security Features
+
+- **Reentrancy Protection** - Guards against common attack vectors
+- **Access Controls** - Proper permission management
+- **Input Validation** - Comprehensive parameter checking
+- **Test Coverage** - 100% test coverage on core functionality
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
+3. Write tests for new functionality
+4. Ensure all tests pass
 5. Submit a pull request
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🚨 Disclaimer
+
+This is educational/demonstration software. Use at your own risk. Not audited for production use.
+
+---
+
+**Need help?** Check the [docs/](docs/) directory or open an issue!

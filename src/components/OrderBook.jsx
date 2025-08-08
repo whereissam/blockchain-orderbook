@@ -26,9 +26,12 @@ const OrderBook = () => {
     <div className="component exchange__orderbook flex flex-col h-full">
       <div className='component__header flex-between'>
         <h2>Order Book</h2>
+        <div className="text-xs text-muted-foreground hidden sm:block">
+          Click orders to fill
+        </div>
       </div>
 
-      <div className="flex flex-row gap-4 flex-1 h-full w-full">
+      <div className="flex flex-row md:flex-col lg:flex-row gap-2 md:gap-3 lg:gap-4 flex-1 h-full w-full">
         {/* Sell Orders Table */}
         <div className="flex-1 h-full">
           <OrderTable

@@ -49,8 +49,10 @@ const useExchangeStore = create(
   }),
 
   loadAllOrders: (allOrders) => set((state) => {
+    console.log('📊 loadAllOrders called with:', allOrders.length, 'orders')
     state.allOrders.loaded = true
     state.allOrders.data = allOrders
+    console.log('📊 allOrders stored in state, data length:', state.allOrders.data.length)
   }),
 
   // Exchange balances

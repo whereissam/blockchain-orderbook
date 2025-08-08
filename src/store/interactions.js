@@ -1,6 +1,10 @@
 import { ethers, formatUnits } from 'ethers'
-import TOKEN_ABI from '../abis/Token.json'
-import EXCHANGE_ABI from '../abis/Exchange.json'
+import TOKEN_JSON from '../abis/Token.json'
+import EXCHANGE_JSON from '../abis/Exchange.json'
+
+// Handle different JSON structures - some have .abi property, others are direct arrays
+const TOKEN_ABI = TOKEN_JSON.abi || TOKEN_JSON
+const EXCHANGE_ABI = EXCHANGE_JSON.abi || EXCHANGE_JSON
 import useProviderStore from './providerStore'
 import useTokensStore from './tokensStore'
 import useExchangeStore from './exchangeStore'
@@ -21,7 +25,10 @@ export const loadProvider = async () => {
     
     // Only use Alchemy for Base Sepolia, use MetaMask directly for other networks
     if (chainId === 84532) { // Base Sepolia
-      const ALCHEMY_RPC_URL = 'https://base-sepolia.g.alchemy.com/v2/SVPGtLg2pMLIc57MJXG-R1En6DcnBB9K'
+      const ALCHEMY_API_KEY = import.meta.env.VITE_ALCHEMY_API_KEY
+      const ALCHEMY_RPC_URL = ALCHEMY_API_KEY 
+        ? `https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`
+        : 'https://sepolia.base.org' // Fallback to public RPC
       const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_RPC_URL)
       
       // Create a hybrid provider: use MetaMask for signing, Alchemy for reading
@@ -59,13 +66,13 @@ export const loadNetwork = async (provider) => {
 }
 
 //3. Load provider account(Login wallet) - get the account info & balance
-export const loadAccount = async (provider) => {
+export const loadAccount = async (provider, forceConnect = false) => {
   try {
     // First try to get existing accounts without requesting permission
     let accounts = await window.ethereum.request({ method: 'eth_accounts' })
     
-    // If no accounts, then request permission
-    if (accounts.length === 0) {
+    // Only request permission if explicitly forced (like when user clicks connect)
+    if (accounts.length === 0 && forceConnect) {
       accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
     }
 
@@ -108,6 +115,23 @@ export const loadAccount = async (provider) => {
   } catch (error) {
     console.error('Failed to load account:', error)
     return null
+  }
+}
+
+// Connect wallet and load balances
+export const connectWalletAndLoadBalances = async (provider, exchange) => {
+  try {
+    const account = await loadAccount(provider, true)
+    if (account && exchange) {
+      const tokensStore = useTokensStore.getState()
+      if (tokensStore.contracts && tokensStore.contracts.length >= 2) {
+        await loadBalances(exchange, tokensStore.contracts, account)
+      }
+    }
+    return account
+  } catch (error) {
+    console.error('Failed to connect wallet and load balances:', error)
+    throw error
   }
 }
 
@@ -245,8 +269,8 @@ export const loadExchange = async (provider, address) => {
       hasBalanceOf: typeof exchange.balanceOf,
       hasDepositToken: typeof exchange.depositToken,
       hasWithdrawToken: typeof exchange.withdrawToken,
-      hasFilledOrders: typeof exchange.filledOrders,
-      hasCancelledOrders: typeof exchange.cancelledOrders,
+      hasOrderFilled: typeof exchange.orderFilled,
+      hasOrderCancelled: typeof exchange.orderCancelled,
       address: exchange.target,
       interface: exchange.interface ? 'Available' : 'Missing'
     })
@@ -283,7 +307,7 @@ export const subscribeToEvents = (exchange) => {
     exchangeStore.transferSuccess(event)
   })
 
-  exchange.on('Order', (id, user, tokenGet, amountGet, tokenGive, amountGive, timestamp, event) => {
+  exchange.on('OrderCreated', (id, user, tokenGet, amountGet, tokenGive, amountGive, timestamp, event) => {
     const order = event.args
     exchangeStore.newOrderSuccess(order, event)
   })
@@ -337,14 +361,14 @@ export const loadBalances = async (exchange, tokens, account) => {
   }
 }
 
-//Load all orders
+//Load all orders - Fixed version
 export const loadAllOrders = async (provider, exchange) => {
   try {
     const exchangeStore = useExchangeStore.getState()
     const block = await provider.getBlockNumber()
     
-    // Limit to recent blocks to avoid rate limiting - much smaller range
-    const fromBlock = Math.max(0, block - 1000) // Last ~1000 blocks (increased for better chart data)
+    // Limit to recent blocks to avoid rate limiting
+    const fromBlock = Math.max(0, block - 1000)
     
     console.log(`Loading orders from block ${fromBlock} to ${block}`)
 
@@ -353,27 +377,24 @@ export const loadAllOrders = async (provider, exchange) => {
     const cancelledOrders = cancelStream.map(event => event.args)
     exchangeStore.loadCancelledOrders(cancelledOrders)
     
-    // Increased delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise(resolve => setTimeout(resolve, 1000))
 
     //Fetch filled orders
     const tradeStream = await exchange.queryFilter('Trade', fromBlock, block)
     const filledOrders = tradeStream.map(event => event.args)
     exchangeStore.loadFilledOrders(filledOrders)
     
-    // Increased delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise(resolve => setTimeout(resolve, 1000))
 
-    //Fetch all orders
-    const orderStream = await exchange.queryFilter('Order', fromBlock, block)
+    //Fetch all orders - FIXED: Use 'OrderCreated' instead of 'Order'
+    const orderStream = await exchange.queryFilter('OrderCreated', fromBlock, block)
     const allOrders = orderStream.map(event => event.args)
     exchangeStore.loadAllOrders(allOrders)
     
-    console.log('Orders loaded successfully')
+    console.log(`Orders loaded successfully: ${allOrders.length} orders found`)
   } catch (error) {
     console.error('Error loading orders:', error)
     console.error('❌ Error loading orders. Some features may not work.')
-    alert('Error loading orders. Some features may not work.')
   }
 }
 
@@ -468,17 +489,32 @@ export const transferTokens = async (provider, exchange, transferType, token, am
 }
 
 // Orders ( buy & sell )
+// Validation helper function
+const validateOrderInputs = (provider, exchange, tokens, order) => {
+  if (!provider) throw new Error('Provider not available. Please connect your wallet.')
+  if (!exchange) throw new Error('Exchange contract not loaded. Please refresh the page.')
+  if (!tokens || tokens.length < 2) throw new Error('Trading tokens not loaded. Please refresh the page.')
+  if (!order) throw new Error('Order data is missing.')
+  
+  // Validate order amounts
+  const amount = parseFloat(order.amount)
+  const price = parseFloat(order.price)
+  
+  if (isNaN(amount) || amount <= 0) throw new Error('Order amount must be a positive number')
+  if (amount < 0.001) throw new Error('Order amount must be at least 0.001')
+  if (amount > 1000000) throw new Error('Order amount too large')
+  
+  if (isNaN(price) || price <= 0) throw new Error('Order price must be a positive number')
+  if (price < 0.000001) throw new Error('Order price must be at least 0.000001')
+  if (price > 1000000) throw new Error('Order price too large')
+  
+  return { amount, price }
+}
+
 export const makeBuyOrder = async (provider, exchange, tokens, order) => {
   try {
-    console.log('🛒 Creating buy order:', { amount: order.amount, price: order.price })
-    
-    if (!provider || !exchange || !tokens || tokens.length < 2) {
-      throw new Error('Missing required components for order creation')
-    }
-
-    if (!order.amount || !order.price || order.amount <= 0 || order.price <= 0) {
-      throw new Error('Invalid order amount or price')
-    }
+    const { amount, price } = validateOrderInputs(provider, exchange, tokens, order)
+    console.log('🛒 Creating buy order:', { amount, price })
 
     const exchangeStore = useExchangeStore.getState()
     
@@ -590,15 +626,8 @@ export const makeBuyOrder = async (provider, exchange, tokens, order) => {
 
 export const makeSellOrder = async (provider, exchange, tokens, order) => {
   try {
-    console.log('💰 Creating sell order:', { amount: order.amount, price: order.price })
-    
-    if (!provider || !exchange || !tokens || tokens.length < 2) {
-      throw new Error('Missing required components for order creation')
-    }
-
-    if (!order.amount || !order.price || order.amount <= 0 || order.price <= 0) {
-      throw new Error('Invalid order amount or price')
-    }
+    const { amount, price } = validateOrderInputs(provider, exchange, tokens, order)
+    console.log('💰 Creating sell order:', { amount, price })
 
     const exchangeStore = useExchangeStore.getState()
     
@@ -947,7 +976,9 @@ export const loadAllOrdersWithHistory = async (provider, exchange) => {
     
     // Get fresh current block to ensure we capture very recent transactions
     const currentBlock = await provider.getBlockNumber()
-    const startBlock = Math.max(0, currentBlock - targetBlocksBack)
+    const network = await provider.getNetwork()
+    // For localhost/development, search from block 0 to ensure we catch all orders
+    const startBlock = Number(network.chainId) === 31337 ? 0 : Math.max(0, currentBlock - targetBlocksBack)
     
     console.log(`📊 Current block: ${currentBlock}, searching from ${startBlock} to ${currentBlock}`)
     
@@ -1002,28 +1033,49 @@ export const loadAllOrdersWithHistory = async (provider, exchange) => {
     
     exchangeStore.loadFilledOrders(combinedTrades)
     
-    // Load all orders in chunks too
+    // Load all orders - Fix event name and improve reliability
     let allOrders = []
-    for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += maxBlockRange) {
-      const toBlock = Math.min(fromBlock + maxBlockRange - 1, currentBlock)
+    
+    try {
+      console.log(`📊 Loading OrderCreated events from block ${startBlock} to ${currentBlock}`)
       
-      try {
-        console.log(`📊 Querying orders chunk: blocks ${fromBlock} to ${toBlock}`)
-        const orderStream = await exchange.queryFilter('Order', fromBlock, toBlock)
-        const orders = orderStream.map(event => event.args)
-        allOrders.push(...orders)
+      // The correct event name is 'OrderCreated' not 'Order' - this is the key fix!
+      for (let fromBlock = startBlock; fromBlock < currentBlock; fromBlock += maxBlockRange) {
+        const toBlock = Math.min(fromBlock + maxBlockRange - 1, currentBlock)
         
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Increased delay to prevent rate limiting
-        
-      } catch (error) {
-        console.log(`📊 Error querying orders chunk ${fromBlock}-${toBlock}:`, error.message)
-        
-        // If rate limited, wait longer before continuing
-        if (error.message.includes('rate limit')) {
-          console.log('📊 Rate limited, waiting 5 seconds...')
-          await new Promise(resolve => setTimeout(resolve, 5000))
+        try {
+          console.log(`📊 Querying OrderCreated events: blocks ${fromBlock} to ${toBlock}`)
+          
+          const orderStream = await exchange.queryFilter('OrderCreated', fromBlock, toBlock)
+          const orders = orderStream.map(event => event.args)
+          
+          console.log(`📊 Found ${orders.length} OrderCreated events in this chunk`)
+          allOrders.push(...orders)
+          
+          // Debug sample order
+          if (orders.length > 0) {
+            console.log(`📊 Sample order from chunk:`, {
+              id: orders[0].id?.toString(),
+              user: orders[0].user,
+              tokenGet: orders[0].tokenGet,
+              tokenGive: orders[0].tokenGive
+            })
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 1000)) // Increased delay
+          
+        } catch (chunkError) {
+          console.log(`📊 Error querying OrderCreated chunk ${fromBlock}-${toBlock}:`, chunkError.message)
+          
+          if (chunkError.message.includes('rate limit')) {
+            console.log('📊 Rate limited, waiting 5 seconds...')
+            await new Promise(resolve => setTimeout(resolve, 5000))
+          }
         }
       }
+      
+    } catch (error) {
+      console.log(`📊 Error querying OrderCreated events:`, error.message)
     }
     
     console.log('📊 Total orders found:', allOrders.length)

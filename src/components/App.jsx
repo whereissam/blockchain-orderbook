@@ -10,7 +10,10 @@ import {
   subscribeToEvents,
   loadAllOrders,
   loadAllOrdersWithHistory,
+  loadBalances,
 } from '../store/interactions'
+
+import useTokensStore from '../store/tokensStore'
 
 import Navbar from './Navbar'
 import Markets from './Market'
@@ -21,17 +24,20 @@ import PriceChart from './PriceChart'
 import Trades from './Trade'
 import Transactions from './Transaction'
 import Alert from './Alert'
+import LocalSetup from './LocalSetup'
 import { Toaster } from './ui/sonner'
 import '../utils/toast.js' // This sets up the global toast functions
 
 function App () {
 
   const loadBlockchainData = useCallback(async () => {
+    let provider, exchange, tokenResult // Declare in outer scope
+    
     try {
       console.log('🚀 Starting loadBlockchainData...')
 
       // Connect Ethers to blockchain
-      const provider = await loadProvider()
+      provider = await loadProvider()
       console.log('Provider loaded:', provider)
 
       if (!provider) {
@@ -45,15 +51,20 @@ function App () {
     const chainId = await loadNetwork(provider)
     console.log('✅ Network loaded, chainId:', chainId)
 
-    // Load account on initial page load
-    const account = await loadAccount(provider)
-    if (!account) {
-      console.error('❌ Failed to load account')
-      console.error('❌ Failed to connect to account')
-      alert('Failed to connect to account. Please connect MetaMask.')
-      return
+    // Try to load account if already connected, but don't force connection
+    let account = null
+    try {
+      // Only check existing accounts, don't request permission
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+      if (accounts.length > 0) {
+        account = await loadAccount(provider)
+        console.log('✅ Account already connected:', account)
+      } else {
+        console.log('ℹ️ No wallet connected yet - orders will load without wallet')
+      }
+    } catch (error) {
+      console.log('ℹ️ Could not check wallet connection, continuing without wallet')
     }
-    console.log('✅ Account loaded:', account)
 
     //Reload page when network changes
     window.ethereum.on('chainChanged', () => {
@@ -62,9 +73,18 @@ function App () {
 
     //Fetch current account & balance from Metamask
     window.ethereum.on('accountsChanged', async () => {
-      await loadAccount(provider)
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+      if (accounts.length > 0) {
+        const newAccount = await loadAccount(provider)
+        // Load balances for the new account
+        if (newAccount && exchange && tokenResult) {
+          await loadBalances(exchange, useTokensStore.getState().contracts, newAccount)
+        }
+      }
     })
 
+    console.log('🔍 About to load tokens...')
+    
     // Token Smart Contract
     console.log('📋 Config:', config)
     
@@ -87,7 +107,7 @@ function App () {
     }
     
     console.log('🪙 Loading tokens:', { SSS: SSS.address, mETH: mETH.address })
-    const tokenResult = await loadToken(provider, [SSS.address, mETH.address])
+    tokenResult = await loadToken(provider, [SSS.address, mETH.address])
     if (!tokenResult) {
       console.error('❌ Failed to load tokens')
       console.error('❌ Failed to load tokens')
@@ -106,7 +126,7 @@ function App () {
     }
     
     console.log('🏦 Loading exchange:', exchangeConfig.address)
-    const exchange = await loadExchange(provider, exchangeConfig.address)
+    exchange = await loadExchange(provider, exchangeConfig.address)
     if (!exchange) {
       console.error('❌ Failed to load exchange')
       console.error('❌ Failed to load exchange')
@@ -116,6 +136,7 @@ function App () {
     console.log('✅ Exchange loaded:', exchange.address || exchange.target)
 
     //Fetch all orders: open, filled, cancelled (including historical data)
+    // Load orders regardless of wallet connection status
     console.log('📊 Loading orders with historical data...')
     await loadAllOrdersWithHistory(provider, exchange)
 
@@ -124,6 +145,12 @@ function App () {
     subscribeToEvents(exchange)
     
     console.log('🎉 Blockchain data loaded successfully!')
+    
+    // Load balances only if account is connected
+    if (account && tokenResult) {
+      console.log('💰 Loading balances...')
+      await loadBalances(exchange, useTokensStore.getState().contracts, account)
+    }
   } catch (error) {
     console.error('❌ Error in loadBlockchainData:', error)
     console.error('❌ Failed to load blockchain data:', error.message)
@@ -164,6 +191,9 @@ function App () {
       </main>
 
       <Alert />
+
+      {/* Local Development Setup */}
+      <LocalSetup />
 
       {/* Sonner Toast Notifications */}
       <Toaster position="top-right" richColors />

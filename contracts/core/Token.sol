@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-contract Token{
+import "../interfaces/IToken.sol";
+
+contract Token is IToken {
   string public name;
   string public symbol;
   uint256 public decimals = 18;
@@ -13,17 +15,7 @@ contract Token{
 
   mapping(address => mapping(address => uint256)) public allowance;
 
-  event Transfer(
-    address indexed from, 
-    address indexed to, 
-    uint256 value
-    );
-
-  event Approval(
-    address indexed owner, 
-    address indexed spender, 
-    uint256 value
-    );
+  // Events are defined in IToken interface
 
   constructor(string memory _name, string memory _symbol, uint256 _totalSupply){
     name = _name;

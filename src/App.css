@@ -15,7 +15,6 @@ button:disabled,
   cursor: not-allowed;
 }
 
-@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --font-sans: Plus Jakarta Sans, sans-serif;
@@ -292,44 +291,60 @@ button:disabled,
 /* Mobile-specific improvements */
 @media (max-width: 768px) {
   .exchange {
-    @apply p-2 gap-2;
+    @apply p-1 gap-2;
   }
   
   .exchange__section--left,
   .exchange__section--right {
-    @apply gap-3;
+    @apply gap-2;
   }
   
   .component {
-    @apply p-3;
+    @apply p-3 text-sm;
   }
   
   .exchange__orderbook,
   .exchange__chart,
   .exchange__trades,
   .exchange__transactions {
-    @apply min-h-[250px] p-3 overflow-x-auto;
+    @apply min-h-[300px] p-2 overflow-x-auto;
   }
 
-  /* Mobile navbar adjustments */
+  /* Mobile navbar adjustments - stack vertically on very small screens */
   .exchange__header {
-    @apply px-2 py-2 grid-cols-1 gap-2 text-center;
+    @apply px-3 py-3 gap-3;
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas: 
+      "brand networks account";
   }
   
-  .exchange__header--brand,
-  .exchange__header--networks,
-  .exchange__header--account {
+  .exchange__header--brand {
+    @apply justify-start;
+    grid-area: brand;
+  }
+  
+  .exchange__header--networks {
     @apply justify-center;
+    grid-area: networks;
+  }
+  
+  .exchange__header--account {
+    @apply justify-end;
+    grid-area: account;
   }
   
   .exchange__header--brand h1 {
-    @apply text-base;
+    @apply text-sm font-medium;
+  }
+
+  .exchange__header--brand .logo {
+    @apply w-6 h-6;
   }
 
   /* Mobile improvements for Balance component */
   .exchange__transfers,
   .exchange__orders {
-    @apply p-3;
+    @apply p-2;
   }
 
   /* Better mobile button spacing */
@@ -341,12 +356,158 @@ button:disabled,
   .exchange__orderbook table,
   .exchange__trades table,
   .exchange__transactions table {
-    @apply text-sm;
+    @apply text-xs;
   }
 
   /* Mobile responsive flex improvements */
   .flex-col.sm\\:flex-row {
     @apply gap-2;
+  }
+
+  /* Component headers mobile optimization */
+  .component__header {
+    @apply flex-col items-start gap-2 mb-3 pb-2;
+  }
+
+  .component__header h2 {
+    @apply text-base font-semibold;
+  }
+
+  /* OrderBook mobile improvements */
+  .exchange__orderbook .flex.flex-row {
+    @apply flex-col gap-3;
+  }
+
+  .exchange__orderbook .flex-1 {
+    @apply w-full;
+  }
+
+  /* Balance component mobile improvements */
+  .exchange__transfers .flex.flex-col.sm\\:flex-row {
+    @apply flex-col gap-2;
+  }
+
+  /* Mobile input improvements */
+  input, select, button {
+    @apply text-base; /* Prevents zoom on iOS */
+  }
+
+  /* Price chart mobile optimization */
+  .exchange__chart .component__header .flex {
+    @apply flex-wrap gap-2;
+  }
+
+  /* Toast notifications mobile adjustment */
+  .toast {
+    @apply min-w-[280px] max-w-[95vw] top-2 right-2;
+  }
+
+  /* Alert mobile adjustment */
+  .alert {
+    @apply w-[280px] bottom-4 right-4;
+  }
+
+  /* Form spacing mobile optimization */
+  .space-y-6 {
+    @apply space-y-4;
+  }
+
+  .space-y-4 {
+    @apply space-y-3;
+  }
+
+  /* Button group mobile improvements */
+  .flex.gap-3 {
+    @apply gap-2;
+  }
+
+  /* Tab improvements for mobile */
+  .tabs {
+    @apply w-full;
+  }
+
+  .tab {
+    @apply px-3 py-2 text-sm;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .exchange {
+    @apply p-1 gap-1;
+  }
+
+  .component {
+    @apply p-2 text-xs;
+  }
+
+  .exchange__header {
+    @apply px-2 py-2 gap-2;
+    grid-template-columns: 1fr;
+    grid-template-areas: 
+      "brand"
+      "networks" 
+      "account";
+    text-align: center;
+  }
+
+  .exchange__header--brand,
+  .exchange__header--networks,
+  .exchange__header--account {
+    @apply justify-center;
+  }
+
+  .exchange__header--brand h1 {
+    @apply text-xs;
+  }
+
+  .exchange__header--brand .logo {
+    @apply w-5 h-5;
+  }
+
+  /* Balance mobile improvements for very small screens */
+  .exchange__transfers .bg-muted\/30 {
+    @apply p-3;
+  }
+
+  .exchange__transfers .space-y-4 {
+    @apply space-y-2;
+  }
+
+  /* Very small screen table adjustments */
+  .exchange__orderbook table,
+  .exchange__trades table,
+  .exchange__transactions table {
+    @apply text-[10px];
+  }
+
+  /* OrderBook very small screen optimization */
+  .exchange__orderbook .component__header h2 {
+    @apply text-sm;
+  }
+
+  /* Button text size for very small screens */
+  button {
+    @apply text-sm;
+  }
+
+  /* Reduce padding in forms */
+  .exchange__transfers,
+  .exchange__orders {
+    @apply p-1;
+  }
+
+  /* Compact spacing */
+  .space-y-6 {
+    @apply space-y-2;
+  }
+
+  .space-y-4 {
+    @apply space-y-2;
+  }
+
+  .space-y-3 {
+    @apply space-y-2;
   }
 }
 

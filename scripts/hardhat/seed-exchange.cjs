@@ -1,4 +1,4 @@
-const config = require('../src/config.json')
+const config = require('../../src/config.json')
 
 const tokens = (n) => {
   return ethers.parseUnits(n.toString(), 'ether')
@@ -16,19 +16,24 @@ async function main () {
   // Fetch network
   const { chainId } = await ethers.provider.getNetwork()
   console.log("Using chainId:", chainId)
+  
+  // Convert chainId to string for config lookup
+  const chainIdStr = chainId.toString()
+  console.log("ChainIdStr:", chainIdStr)
+  console.log("Config for chain:", config[chainIdStr])
 
   // Fetch deployed tokens
-  const SSS = await ethers.getContractAt('Token', config[chainId].SSS.address)
+  const SSS = await ethers.getContractAt('Token', config[chainIdStr].SSS.address)
   console.log(`SSS Token fetched: ${SSS.address}\n`)
 
-  const mETH = await ethers.getContractAt('Token', config[chainId].mETH.address)
+  const mETH = await ethers.getContractAt('Token', config[chainIdStr].mETH.address)
   console.log(`mETH Token fetched: ${mETH.address}\n`)
 
-  const mDAI = await ethers.getContractAt('Token', config[chainId].mDAI.address)
+  const mDAI = await ethers.getContractAt('Token', config[chainIdStr].mDAI.address)
   console.log(`mDAI Token fetched: ${mDAI.address}\n`)
 
   // Fetch the deployed exchange
-  const exchange = await ethers.getContractAt('Exchange', config[chainId].exchange.address)
+  const exchange = await ethers.getContractAt('Exchange', config[chainIdStr].exchange.address)
   console.log(`Exchange fetched: ${exchange.address}\n`)
 
   // Give tokens to account[1]

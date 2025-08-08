@@ -9,19 +9,19 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // Load config and ABIs
-const config = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/config.json'), 'utf8'))
-const TOKEN_ABI = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/abis/Token.json'), 'utf8'))
-const EXCHANGE_ABI = JSON.parse(fs.readFileSync(path.join(__dirname, '../src/abis/Exchange.json'), 'utf8'))
+const config = JSON.parse(fs.readFileSync(path.join(__dirname, '../../src/config.json'), 'utf8'))
+const TOKEN_ABI = JSON.parse(fs.readFileSync(path.join(__dirname, '../../src/abis/Token.json'), 'utf8'))
+const EXCHANGE_ABI = JSON.parse(fs.readFileSync(path.join(__dirname, '../../src/abis/Exchange.json'), 'utf8'))
 
 async function testContracts() {
   console.log('🧪 Testing Blockchain Contracts...\n')
   
   try {
-    // Connect to Base Sepolia
-    const chainId = '84532'
-    const provider = new ethers.JsonRpcProvider('https://sepolia.base.org')
+    // Connect to Local Network
+    const chainId = '31337'
+    const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545')
     
-    console.log('📡 Connected to Base Sepolia')
+    console.log('📡 Connected to Local Network (Anvil)')
     console.log(`Block Number: ${await provider.getBlockNumber()}\n`)
 
     // Test network config

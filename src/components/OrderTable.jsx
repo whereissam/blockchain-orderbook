@@ -25,16 +25,16 @@ const OrderTable = ({
     return (
       <div className={`${bgColorClass} ${borderColorClass} rounded border h-full w-full flex flex-col relative`}>
         {/* Title Header - Always Visible */}
-        <div className={`${bgColorClass} border-b ${headerBorderClass} p-4 flex-shrink-0 w-full`}>
-          <h3 className={`font-bold text-base ${colorClass} m-0`}>{title}</h3>
+        <div className={`${bgColorClass} border-b ${headerBorderClass} p-3 sm:p-4 flex-shrink-0 w-full`}>
+          <h3 className={`font-bold text-sm sm:text-base ${colorClass} m-0`}>{title}</h3>
         </div>
 
         {/* Display 'No Orders' banner if no orders are present */}
         {!orders || orders.length === 0 ? (
-          <div className={`flex justify-center items-center flex-1 ${colorClass} text-center w-full`}>
+          <div className={`flex justify-center items-center flex-1 ${colorClass} text-center w-full p-4`}>
             <div>
-              <div className="text-lg font-medium">{noOrdersText}</div>
-              <div className="text-sm text-muted-foreground mt-2">Waiting for orders to appear</div>
+              <div className="text-base sm:text-lg font-medium">{noOrdersText}</div>
+              <div className="text-xs sm:text-sm text-muted-foreground mt-2">Waiting for orders to appear</div>
             </div>
           </div>
         ) : (
@@ -43,10 +43,10 @@ const OrderTable = ({
             <div className={`${headerBgClass} border-b ${headerBorderClass} flex-shrink-0 sticky top-0 z-10 w-full`}>
               <div className="grid gap-0 w-full" style={{gridTemplateColumns: '2fr 1fr 1fr'}}>
                 {headers.map((header, index) => (
-                  <div key={index} className={`p-3 text-left ${colorClass} font-semibold text-xs uppercase tracking-wide border-r last:border-r-0 ${headerBorderClass} w-full`}>
+                  <div key={index} className={`p-2 sm:p-3 text-left ${colorClass} font-semibold text-[10px] sm:text-xs uppercase tracking-wide border-r last:border-r-0 ${headerBorderClass} w-full`}>
                     <div className="flex items-center justify-between w-full">
-                      <span>{header.label}</span>
-                      {header.sortable && <img src={sort} alt="Sort" className="w-3 h-3 opacity-60" />}
+                      <span className="truncate">{header.label}</span>
+                      {header.sortable && <img src={sort} alt="Sort" className="w-2 h-2 sm:w-3 sm:h-3 opacity-60 flex-shrink-0 ml-1" />}
                     </div>
                   </div>
                 ))}
@@ -60,17 +60,23 @@ const OrderTable = ({
                   <div
                     key={index}
                     onClick={() => fillOrderedHandler(order)}
-                    className={`grid gap-0 border-b border-border/20 hover:${bgColorClass} cursor-pointer transition-all duration-150 border-l-2 border-l-transparent ${hoverBorderClass} group w-full`}
+                    className={`grid gap-0 border-b border-border/20 hover:${bgColorClass} cursor-pointer transition-all duration-150 border-l-2 border-l-transparent ${hoverBorderClass} group w-full active:bg-accent`}
                     style={{gridTemplateColumns: '2fr 1fr 1fr'}}
                   >
-                    <div className="p-3 text-sm font-medium border-r border-border/10 group-hover:border-border/30 w-full">
-                      {isSellOrder ? ((order.token0Amount) * 1).toFixed(1) : ((order.token1Amount) * 1).toFixed(1)}
+                    <div className="p-2 sm:p-3 text-xs sm:text-sm font-medium border-r border-border/10 group-hover:border-border/30 w-full">
+                      <span className="block truncate">
+                        {isSellOrder ? ((order.token0Amount) * 1).toFixed(1) : ((order.token1Amount) * 1).toFixed(1)}
+                      </span>
                     </div>
-                    <div className={`p-3 text-sm font-bold ${colorClass} border-r border-border/10 group-hover:border-border/30 text-center w-full`}>
-                      {order.tokenPrice}
+                    <div className={`p-2 sm:p-3 text-xs sm:text-sm font-bold ${colorClass} border-r border-border/10 group-hover:border-border/30 text-center w-full`}>
+                      <span className="block truncate">
+                        {order.tokenPrice}
+                      </span>
                     </div>
-                    <div className="p-3 text-sm text-muted-foreground text-right w-full">
-                      {isSellOrder ? ((order.token1Amount) * 1).toFixed(1) : ((order.token0Amount) * 1).toFixed(1)}
+                    <div className="p-2 sm:p-3 text-xs sm:text-sm text-muted-foreground text-right w-full">
+                      <span className="block truncate">
+                        {isSellOrder ? ((order.token1Amount) * 1).toFixed(1) : ((order.token0Amount) * 1).toFixed(1)}
+                      </span>
                     </div>
                   </div>
                 ))}

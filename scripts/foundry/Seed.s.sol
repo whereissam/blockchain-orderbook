@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Script, console} from "forge-std/Script.sol";
-import "../contracts/Token.sol";
-import "../contracts/Exchange.sol";
+import "../../contracts/core/Token.sol";
+import "../../contracts/core/Exchange.sol";
 
 contract SeedScript is Script {
     function run() public {

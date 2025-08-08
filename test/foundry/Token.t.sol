@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Test, console} from "forge-std/Test.sol";
-import "../contracts/Token.sol";
+import "@core/Token.sol";
 
 contract TokenTest is Test {
     Token public token;

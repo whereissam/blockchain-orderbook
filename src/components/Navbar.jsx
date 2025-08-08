@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import Blockies from 'react-blockies'
-import { loadProvider, loadAccount } from '../store/interactions'
+import { loadProvider, connectWalletAndLoadBalances } from '../store/interactions'
 import useProviderStore from '../store/providerStore'
+import useExchangeStore from '../store/exchangeStore'
 import { useToast } from '../hooks/useToast'
 import { Button } from '../components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '../components/ui/dropdown-menu'
@@ -16,6 +17,7 @@ const Navbar = () => {
   const account = useProviderStore(state => state.account)
   const balance = useProviderStore(state => state.balance)
   const disconnectProvider = useProviderStore(state => state.disconnectProvider)
+  const exchange = useExchangeStore(state => state.exchange)
   const { showToast } = useToast()
   
 
@@ -23,8 +25,9 @@ const Navbar = () => {
     try {
       // Load provider first if it doesn't exist
       const currentProvider = provider || await loadProvider()
-      // Then load account
-      await loadAccount(currentProvider)
+      // Then connect wallet and load balances
+      await connectWalletAndLoadBalances(currentProvider, exchange)
+      showToast('Wallet connected successfully!', 'success', 3000)
     } catch (error) {
       console.error('Failed to connect wallet:', error)
       showToast('Failed to connect wallet. Please check MetaMask.', 'error', 4000)
@@ -122,19 +125,23 @@ const Navbar = () => {
     <div className='exchange__header grid'>
       <div className='exchange__header--brand flex'>
         <img src={logo} className="logo" alt="DApp Logo"></img>
-        <h1>SSS Token Exchange</h1>
+        <h1 className="hidden sm:block">SSS Token Exchange</h1>
+        <h1 className="block sm:hidden">SSS</h1>
       </div>
       <div className='exchange__header--networks flex'>
-        <img src={eth} alt="ETH Logo" className='Eth Logo' />
+        <img src={eth} alt="ETH Logo" className='Eth Logo w-5 h-5 sm:w-6 sm:h-6' />
 
         {chainId && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="bg-secondary border-border">
-                {getNetworkName(chainId)}
+              <Button variant="outline" size="sm" className="bg-secondary border-border text-xs sm:text-sm">
+                <span className="hidden sm:inline">{getNetworkName(chainId)}</span>
+                <span className="sm:hidden">
+                  {chainId === 31337 ? 'Local' : chainId === 84532 ? 'Base' : chainId === 11155111 ? 'Sepolia' : 'Unknown'}
+                </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="center" className="w-48">
               <DropdownMenuItem onClick={() => networkHandler('0x7A69')}>
                 Localhost
               </DropdownMenuItem>
@@ -151,23 +158,28 @@ const Navbar = () => {
       </div>
       <div className='exchange__header--account flex'>
         {balance ? (
-          <p><small>My Balance</small>{Number(balance).toFixed(4)}</p>
+          <p className="hidden sm:block"><small>My Balance</small>{Number(balance).toFixed(4)}</p>
         ) : (
-          <p><small>My Balance</small>0 ETH</p>
+          <p className="hidden sm:block"><small>My Balance</small>0 ETH</p>
         )}
         {account ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="secondary" className="flex items-center gap-3 h-12">
-                {account.slice(0, 5) + '...' + account.slice(38, 42)}
+              <Button variant="secondary" className="flex items-center gap-2 sm:gap-3 h-10 sm:h-12 text-xs sm:text-sm">
+                <span className="hidden sm:inline">
+                  {account.slice(0, 5) + '...' + account.slice(38, 42)}
+                </span>
+                <span className="sm:hidden">
+                  {account.slice(0, 4) + '...' + account.slice(-2)}
+                </span>
                 <Blockies
                   seed={account}
-                  size={10}
-                  scale={3}
+                  size={8}
+                  scale={2}
                   color="#60a5fa"
                   bgColor="#1e293b"
                   spotColor="#94a3b8"
-                  className="identicon rounded-full"
+                  className="identicon rounded-full sm:scale-125"
                 />
               </Button>
             </DropdownMenuTrigger>
@@ -192,7 +204,9 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Button onClick={connectHandler}>Connect</Button>
+          <Button onClick={connectHandler} size="sm" className="text-xs sm:text-sm">
+            Connect
+          </Button>
         )}
       </div>
     </div>

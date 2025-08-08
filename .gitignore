@@ -31,6 +31,20 @@ coverage.json
 typechain
 typechain-types
 
+# Foundry files
 out/
 broadcast/
 cache_forge/
+
+# Test artifacts
+test-results/
+playwright-report/
+
+# Archive (local development artifacts)
+archive/
+
+# Bundle analysis
+bun.lockb
+
+screenshots/
+scripts/

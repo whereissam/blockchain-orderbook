@@ -2,10 +2,16 @@
 pragma solidity ^0.8.0;
 
 import {Test, console} from "forge-std/Test.sol";
-import "../contracts/Token.sol";
-import "../contracts/Exchange.sol";
+import "@core/Token.sol";
+import "@core/Exchange.sol";
 
 contract ExchangeTest is Test {
+    // Event declarations for testing
+    event Deposit(address token, address user, uint256 amount, uint256 balance);
+    event Withdraw(address token, address user, uint256 amount, uint256 balance);
+    event OrderCreated(uint256 id, address user, address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, uint256 timestamp);
+    event Cancel(uint256 id, address user, address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, uint256 timestamp);
+    event Trade(uint256 id, address user, address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, address creator, uint256 timestamp);
     Token public token1;
     Token public token2;
     Exchange public exchange;
@@ -269,7 +275,7 @@ contract ExchangeTest is Test {
         
         // Test Order event
         vm.expectEmit(true, true, true, true);
-        emit Order(1, user1, address(token2), orderPrice, address(token1), orderAmount, block.timestamp);
+        emit OrderCreated(1, user1, address(token2), orderPrice, address(token1), orderAmount, block.timestamp);
         exchange.makeOrder(address(token2), orderPrice, address(token1), orderAmount);
         vm.stopPrank();
         
@@ -284,8 +290,5 @@ contract ExchangeTest is Test {
         vm.stopPrank();
     }
     
-    // Events to test
-    event Deposit(address token, address user, uint256 amount, uint256 balance);
-    event Order(uint256 id, address user, address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, uint256 timestamp);
-    event Trade(uint256 id, address user, address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, address creator, uint256 timestamp);
+    // Event declarations moved to top of contract
 }

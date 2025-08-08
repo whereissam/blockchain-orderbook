@@ -39,7 +39,7 @@ const Order = () => {
   }
 
   return (
-    <div className="component exchange__orders">
+    <div className="">
       <div className="component__header">
         <h2>New Order</h2>
         <Tabs value={isBuy ? 'buy' : 'sell'} onValueChange={handleTabChange}>
@@ -50,7 +50,6 @@ const Order = () => {
         </Tabs>
       </div>
 
-      
       {!isReady && (
         <div className="flex-center w-full py-8 px-4 text-muted-foreground">
           Connect your wallet to place orders
@@ -90,7 +89,7 @@ const Order = () => {
           type='submit' 
           disabled={!isReady}
           className="w-full"
-          variant={!isReady ? 'outline' : 'default'}
+          variant={!isReady ? 'outline' : (isBuy ? 'default' : 'destructive')}
         >
           {!isReady ? 'Connect Wallet' : isBuy ? 'Place Buy Order' : 'Place Sell Order'}
         </Button>

@@ -1,35 +1,23 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import './Token.sol';
+import "./Token.sol";
+import "../interfaces/IExchange.sol";
+import "../interfaces/IToken.sol";
+import "../libraries/ExchangeLib.sol";
 
-contract Exchange{
+contract Exchange is IExchange {
   address public feeAccount;
   uint256 public feePercent;
   mapping(address => mapping(address => uint256)) public tokens;
-  mapping(uint256 => _Order) public orders;
+  mapping(uint256 => Order) public orders;
   uint256 public orderCount; 
   mapping(uint256 => bool) public orderCancelled; //true or false
   mapping(uint256 => bool) public orderFilled; //true or false
 
 
-  event Deposit(address token, address user, uint256 amount, uint256 balance);
-  event Withdraw(address token, address user, uint256 amount, uint256 balance);
-  event Order(uint256 id, address user, address tokenGet,uint256 amountGet,address tokenGive, uint256 amountGive, uint256 timestamp);
-  event Cancel(uint256 id, address user, address tokenGet,uint256 amountGet,address tokenGive, uint256 amountGive, uint256 timestamp);
-  event Trade(uint256 id, address user, address tokenGet, uint256 amountGet, address tokenGive, uint256 amountGive, address creator, uint256 timestamp);
-
-  //A way model the order
-  struct _Order{
-    //Attribute of an order
-    uint256 id; //Unique identifier for oerder
-    address user; //User who made order
-    address tokenGet; //Address of the token they receive
-    uint256 amountGet; //Amount they receive
-    address tokenGive; //Address of token they give
-    uint256 amountGive; //Amount they give
-    uint256 timestamp; //When order was created
-  }
+  // Events are defined in IExchange interface
+  // Order struct is defined in IExchange interface
   
 
   constructor(address _feeAccount, uint256 _feePercent){
@@ -80,7 +68,7 @@ contract Exchange{
     //Instatiate a new order
     orderCount++;
 
-    orders[orderCount] = _Order(
+    orders[orderCount] = Order(
       orderCount,
       msg.sender,
       _tokenGet,
@@ -91,14 +79,14 @@ contract Exchange{
     );
 
     //Emit event
-    emit Order(orderCount, msg.sender, _tokenGet, _amountGet, _tokenGive, _amountGive, block.timestamp);
+    emit OrderCreated(orderCount, msg.sender, _tokenGet, _amountGet, _tokenGive, _amountGive, block.timestamp);
 
 
   }
 
   function cancelOrder(uint256 _id) public {
     //Fetch order
-    _Order storage _order = orders[_id];
+    Order storage _order = orders[_id];
 
     //Ensure the caller of the function is the owner of the order
     require(address(_order.user) == msg.sender);
@@ -126,7 +114,7 @@ contract Exchange{
     require(!orderCancelled[_id]);
 
     //Fetch order
-    _Order storage _order = orders[_id];
+    Order storage _order = orders[_id];
 
     //Swapping Tokens(trading)
     _trade(
@@ -146,28 +134,38 @@ contract Exchange{
   function _trade(uint256 _orderId, address _user, address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) internal {
     
     //Fee is paid by the user who filled the order(msg.sender)
-    //Fee is deducted from _amountGet
+    //Fee is deducted from _amountGet (the token the order filler is providing)
     uint256 _feeAmount = (_amountGet * feePercent) / 100;
     // console.log(_feeAmount);
 
     //Execute trade
     //msg.sender is the user who filled the order, while _user is who created the order  
-   tokens[_tokenGet][msg.sender] =
-            tokens[_tokenGet][msg.sender] -
-            (_amountGet + _feeAmount);
-
-        tokens[_tokenGet][_user] = tokens[_tokenGet][_user] + _amountGet;
-    // console.log(tokens[_tokenGet][_user]);
-
-    //Charge fees
+    
+    // Check balances before trading
+    // Filler (msg.sender) provides what the order creator wants (tokenGet) and pays with that
+    require(tokens[_tokenGet][msg.sender] >= _amountGet, "Filler insufficient balance for tokenGet");
+    // Creator (_user) has what they're offering (tokenGive)
+    require(tokens[_tokenGive][_user] >= _amountGive, "Creator insufficient tokenGive balance");
+    
+    // Order filler (msg.sender) gives what the creator wants (tokenGet)
+    tokens[_tokenGet][msg.sender] =
+            tokens[_tokenGet][msg.sender] - _amountGet;
+    
+    // Order creator (_user) receives what they wanted minus fee
+    tokens[_tokenGet][_user] = 
+            tokens[_tokenGet][_user] + (_amountGet - _feeAmount);
+    
+    // Fee account receives the fee (from what creator wanted)
     tokens[_tokenGet][feeAccount] =
-            tokens[_tokenGet][feeAccount] +
-            _feeAmount;
-
-        tokens[_tokenGive][_user] = tokens[_tokenGive][_user] - _amountGive;
-        tokens[_tokenGive][msg.sender] =
-            tokens[_tokenGive][msg.sender] +
-            _amountGive;
+            tokens[_tokenGet][feeAccount] + _feeAmount;
+    
+    // Order creator (_user) gives what they offered  
+    tokens[_tokenGive][_user] = 
+            tokens[_tokenGive][_user] - _amountGive;
+    
+    // Order filler (msg.sender) receives what the creator offered
+    tokens[_tokenGive][msg.sender] =
+            tokens[_tokenGive][msg.sender] + _amountGive;
 
     // Emit trade event
         emit Trade(

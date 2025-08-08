@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Chart from 'react-apexcharts'
 
 import arrowDown from '../assets/down-arrow.svg'
@@ -13,10 +14,11 @@ import useTokensStore from '../store/tokensStore'
 import useExchangeStore from '../store/exchangeStore'
 
 const PriceChart = () => {
+  const [timeRange, setTimeRange] = useState('5m')
   const account = useProviderStore((state) => state.account)
   const symbols = useTokensStore((state) => state.symbols)
   const filledOrders = useExchangeStore((state) => state.filledOrders)
-  const priceChart = usePriceChartSelector()
+  const priceChart = usePriceChartSelector(timeRange)
   
   // Debug: Check filled orders
   console.log('📊 PriceChart Debug:', {
@@ -52,8 +54,30 @@ const PriceChart = () => {
           )}
         </div>
 
-        <div className="text-xs text-muted-foreground">
-          Price Chart • Candlestick View
+        <div className="flex items-center gap-4">
+          <div className="text-xs text-muted-foreground">
+            Price Chart • Candlestick View
+          </div>
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            {[
+              { label: '5m', value: '5m' },
+              { label: '1h', value: '1h' },
+              { label: '4h', value: '4h' },
+              { label: '1d', value: '1d' }
+            ].map((range) => (
+              <button
+                key={range.value}
+                onClick={() => setTimeRange(range.value)}
+                className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                  timeRange === range.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10'
+                }`}
+              >
+                {range.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -104,7 +128,16 @@ const PriceChart = () => {
           <div className="flex-1 min-h-0 w-full p-4">
             <Chart
               type="candlestick"
-              options={options}
+              options={{
+                ...options,
+                xaxis: {
+                  ...options.xaxis,
+                  labels: {
+                    ...options.xaxis.labels,
+                    format: timeRange === '1d' ? 'MMM dd' : timeRange === '4h' || timeRange === '1h' ? 'HH:mm' : 'HH:mm'
+                  }
+                }
+              }}
               series={priceChart && priceChart.series && Array.isArray(priceChart.series) ? priceChart.series : defaultSeries}
               width="100%"
               height="100%"

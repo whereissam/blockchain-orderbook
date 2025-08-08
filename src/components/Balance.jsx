@@ -528,23 +528,9 @@ const Balance = () => {
               <span className="text-muted-foreground font-medium">WALLET:</span>
               <p className="font-mono text-lg font-semibold">
                 {isLoadingBalances ? 'Updating...' : 
-                  (tokenBalances && tokenBalances[0] !== undefined ? tokenBalances[0] : 
-                    (!isReady ? 'Loading...' : '0'))}
-                {/* Debug info */}
-                {process.env.NODE_ENV === 'development' && (
-                  <small className="block text-xs text-gray-500">
-                    Ready: {typeof isReady === 'boolean' ? (isReady ? 'true' : 'false') : `[${typeof isReady}]`} | 
-                    Tokens: {tokens?.length || 0} | 
-                    StableTokens: {stableTokens ? '✓' : '✗'} | 
-                    Balance: {tokenBalances?.[0] || 'none'} | 
-                    Loading: {isLoadingBalances ? 'true' : 'false'}
-                    {tokenBalances?.[0] === '0' && (
-                      <div className="mt-2 text-yellow-600">
-                        ⚠️ You need {symbols?.[0] || 'SSS'} tokens to deposit. Contact the project deployer or check for a token faucet.
-                      </div>
-                    )}
-                  </small>
-                )}
+                  (tokenBalances && tokenBalances[0] !== undefined ? 
+                    (typeof tokenBalances[0] === 'string' ? tokenBalances[0] : tokenBalances[0].toString()) : 
+                    (!isReady ? 'Loading...' : '0.0'))}
               </p>
             </div>
             <Button 
@@ -562,8 +548,9 @@ const Balance = () => {
             <span className="text-muted-foreground font-medium">EXCHANGE:</span>
             <p className="font-mono text-lg font-semibold">
               {isLoadingBalances ? 'Updating...' : 
-                (exchangeBalances && exchangeBalances[0] !== undefined ? exchangeBalances[0] : 
-                  (!isReady ? 'Loading...' : '0'))}
+                (exchangeBalances && exchangeBalances[0] !== undefined ? 
+                  (typeof exchangeBalances[0] === 'string' ? exchangeBalances[0] : exchangeBalances[0].toString()) : 
+                  (!isReady ? 'Loading...' : '0.0'))}
             </p>
           </div>
         </div>
